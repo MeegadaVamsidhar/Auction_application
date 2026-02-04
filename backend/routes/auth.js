@@ -56,6 +56,12 @@ router.post('/register', async (req, res) => {
 
         if (role === 'admin') {
             try {
+                const systemAdminEmail = process.env.EMAIL_USER ? process.env.EMAIL_USER.trim() : null;
+
+                if (!systemAdminEmail) {
+                    console.error("ERROR: EMAIL_USER is not defined in environment variables.");
+                }
+
                 // Generate approval token
                 const approvalToken = jwt.sign(
                     { id: user._id, action: 'approve_admin' },
@@ -63,42 +69,48 @@ router.post('/register', async (req, res) => {
                     { expiresIn: '7d' }
                 );
 
-                // Determine base URLs
-                const protocol = req.protocol;
+                // Determine base URLs - Force HTTPS for Vercel/Production
                 const host = req.get('host');
+                const isLocal = host.includes('localhost') || host.includes('127.0.0.1');
+                const protocol = isLocal ? 'http' : 'https';
+
                 const backendUrl = `${protocol}://${host}`;
-                const frontendUrl = req.get('origin') || `${protocol}://${host.replace(':5000', ':5173')}`;
+                const frontendUrl = req.get('origin') || (isLocal ? 'http://localhost:5173' : `${protocol}://${host.replace('api.', '')}`);
 
                 const approvalLink = `${backendUrl}/api/admin/approve-via-email?token=${approvalToken}`;
 
-                // 1. Notify System Admin (for approval)
-                await sendEmail(
-                    process.env.EMAIL_USER || 'admin@auction.com',
-                    'New Admin Registration Action Required',
-                    `<h3>New Admin Registration</h3>
-                     <p>A new user has registered as an Admin and requires approval.</p>
-                     <p><strong>Username:</strong> ${username}</p>
-                     <p><strong>Mobile:</strong> ${mobile}</p>
-                     ${email ? `<p><strong>Email:</strong> ${email}</p>` : ''}
-                     <br/>
-                     <a href="${approvalLink}" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">Approve Now</a>
-                     <br/><br/>
-                     <p>Or login to the <a href="${frontendUrl}/admin-login">dashboard</a> to approve manually.</p>`
-                );
+                console.log(`Attempting to send approval email to System Admin: ${systemAdminEmail}`);
 
-                // 2. Notify the Registering Admin (confirmation)
-                if (email) {
+                // 1. Notify System Admin (The one who approves)
+                if (systemAdminEmail) {
                     await sendEmail(
-                        email,
-                        'Admin Registration Pending Approval',
-                        `<h3>Registration Received</h3>
-                         <p>Hello ${username},</p>
-                         <p>Your registration as an Admin has been received and is currently pending approval by the system administrator.</p>
-                         <p>You will receive another email once your account has been approved.</p>`
+                        systemAdminEmail,
+                        `🚨 ACTION REQUIRED: New Admin Approval Requested (${username})`,
+                        `<h3>New Admin Registration Pending</h3>
+                         <p>A new user has requested Admin access to the Auction System.</p>
+                         <p><strong>Username:</strong> ${username}</p>
+                         <p><strong>Mobile:</strong> ${mobile}</p>
+                         ${email ? `<p><strong>Email:</strong> ${email}</p>` : ''}
+                         <br/>
+                         <a href="${approvalLink}" style="background-color: #e63946; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">Approve User Registration</a>
+                         <br/><br/>
+                         <p>Or manually approve via the <a href="${frontendUrl}/admin-login">Admin Dashboard</a>.</p>`
+                    );
+                }
+
+                // 2. Notify the Registering Admin (Confirmation Receipt)
+                if (email && email.trim() !== systemAdminEmail) {
+                    await sendEmail(
+                        email.trim(),
+                        'Admin Registration Received - Pending Approval',
+                        `<h3>Hello ${username},</h3>
+                         <p>Your registration as an Admin has been received and is currently <strong>pending approval</strong>.</p>
+                         <p>The system administrator has been notified. You will receive an email once your access is granted.</p>
+                         <p>Best regards,<br/>Auction Team</p>`
                     );
                 }
             } catch (emailError) {
-                console.error("Failed to send admin notification emails:", emailError);
+                console.error("CRITICAL: Failed to send admin registration emails:", emailError.message);
             }
         }
 
