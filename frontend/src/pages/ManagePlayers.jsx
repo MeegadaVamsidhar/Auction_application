@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
+import API_URL from '../config';
+
 const ManagePlayers = () => {
     const navigate = useNavigate();
     const [players, setPlayers] = useState([]);
@@ -19,7 +21,7 @@ const ManagePlayers = () => {
 
     const fetchPlayers = async () => {
         try {
-            const res = await axios.get('http://localhost:5000/api/admin/players');
+            const res = await axios.get(`${API_URL}/api/admin/players`);
             setPlayers(res.data);
         } catch (err) {
             console.error(err);
@@ -33,7 +35,7 @@ const ManagePlayers = () => {
     const handleDelete = async (id) => {
         if (confirm('Are you sure you want to delete this player?')) {
             try {
-                await axios.delete(`http://localhost:5000/api/admin/players/${id}`);
+                await axios.delete(`${API_URL}/api/admin/players/${id}`);
                 fetchPlayers();
             } catch (err) {
                 alert('Error deleting player');
@@ -59,7 +61,7 @@ const ManagePlayers = () => {
         e.preventDefault();
         try {
             if (editingPlayer) {
-                await axios.put(`http://localhost:5000/api/admin/players/${editingPlayer._id}`, formData);
+                await axios.put(`${API_URL}/api/admin/players/${editingPlayer._id}`, formData);
             } else {
                 // For manual add, we use the register endpoint (or a new admin one)
                 // Using register endpoint for now, dealing with status separately if needed
@@ -67,7 +69,7 @@ const ManagePlayers = () => {
                 // If we want 'approved', we might need to modify the backend or send 'status' if allowed.
                 // Looking at Player.js, status has a default but is not immutable.
                 // However, the /players/register endpoint uses `new Player(req.body)`, so it SHOULD accept status if passed!
-                await axios.post('http://localhost:5000/api/admin/players/register', formData);
+                await axios.post(`${API_URL}/api/admin/players/register`, formData);
             }
             setShowModal(false);
             setEditingPlayer(null);
@@ -113,8 +115,8 @@ const ManagePlayers = () => {
                                 <td className="p-4 font-mono">₹{player.basePrice}L</td>
                                 <td className="p-4">
                                     <span className={`px-2 py-1 rounded text-xs uppercase font-bold ${player.status === 'approved' ? 'bg-green-500/10 text-green-500' :
-                                            player.status === 'sold' ? 'bg-blue-500/10 text-blue-500' :
-                                                'bg-red-500/10 text-red-500'
+                                        player.status === 'sold' ? 'bg-blue-500/10 text-blue-500' :
+                                            'bg-red-500/10 text-red-500'
                                         }`}>{player.status}</span>
                                 </td>
                                 <td className="p-4 flex gap-2">

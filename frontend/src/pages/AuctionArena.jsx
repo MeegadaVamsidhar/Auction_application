@@ -4,8 +4,9 @@ import { AuthContext } from '../context/AuthContext';
 import io from 'socket.io-client';
 import { Trophy, Clock, User as UserIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import API_URL from '../config';
 
-const socket = io('http://localhost:5000');
+const socket = io(API_URL);
 
 const AuctionArena = () => {
     const { user, logout } = useContext(AuthContext);

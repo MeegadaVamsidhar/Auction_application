@@ -3,6 +3,8 @@ import axios from 'axios';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 
+import API_URL from '../config';
+
 const PlayerRegistration = () => {
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
@@ -25,7 +27,7 @@ const PlayerRegistration = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await axios.post('http://localhost:5000/api/players/register', formData);
+            await axios.post(`${API_URL}/api/players/register`, formData);
             alert('Registration submitted successfully! Good luck for the auction.');
             navigate('/');
         } catch (err) {

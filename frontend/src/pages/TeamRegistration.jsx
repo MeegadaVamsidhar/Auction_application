@@ -3,6 +3,8 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
+import API_URL from '../config';
+
 const TeamRegistration = () => {
     const [teamName, setTeamName] = useState('');
     const [loading, setLoading] = useState(false);
@@ -30,7 +32,7 @@ const TeamRegistration = () => {
         setError('');
 
         try {
-            await axios.post('http://localhost:5000/api/auth/create-team', {
+            await axios.post(`${API_URL}/api/auth/create-team`, {
                 userId: user.id || user._id,
                 teamName
             });
@@ -38,7 +40,7 @@ const TeamRegistration = () => {
             alert('Team registered successfully! Waiting for admin approval.');
 
             // Refresh user data
-            const statusRes = await axios.get(`http://localhost:5000/api/auth/captain-status/${user.id || user._id}`);
+            const statusRes = await axios.get(`${API_URL}/api/auth/captain-status/${user.id || user._id}`);
             if (statusRes.data.hasTeam && statusRes.data.team) {
                 user.team = statusRes.data.team._id;
                 localStorage.setItem('user', JSON.stringify(user));

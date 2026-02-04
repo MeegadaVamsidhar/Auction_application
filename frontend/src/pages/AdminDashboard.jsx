@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import io from 'socket.io-client';
 
+import API_URL from '../config';
+
 const AdminDashboard = () => {
     const [players, setPlayers] = useState([]);
     const [teams, setTeams] = useState([]);
@@ -18,11 +20,11 @@ const AdminDashboard = () => {
 
     const fetchData = async () => {
         const [playersRes, teamsRes, pendingAdminsRes, allAdminsRes, linkRes] = await Promise.all([
-            axios.get('http://localhost:5000/api/admin/players'),
-            axios.get('http://localhost:5000/api/admin/teams'),
-            axios.get('http://localhost:5000/api/admin/pending-admins'),
-            axios.get('http://localhost:5000/api/admin/all-admins'),
-            axios.get('http://localhost:5000/api/admin/settings/player-list-link')
+            axios.get(`${API_URL}/api/admin/players`),
+            axios.get(`${API_URL}/api/admin/teams`),
+            axios.get(`${API_URL}/api/admin/pending-admins`),
+            axios.get(`${API_URL}/api/admin/all-admins`),
+            axios.get(`${API_URL}/api/admin/settings/player-list-link`)
         ]);
         setPlayers(playersRes.data);
         setTeams(teamsRes.data);
@@ -36,7 +38,7 @@ const AdminDashboard = () => {
 
     const savePlayerListLink = async () => {
         try {
-            await axios.post('http://localhost:5000/api/admin/settings/player-list-link', { link: playerListLink });
+            await axios.post(`${API_URL}/api/admin/settings/player-list-link`, { link: playerListLink });
             setSavedPlayerListLink(playerListLink);
             alert('Link saved successfully!');
         } catch (err) {
@@ -46,7 +48,7 @@ const AdminDashboard = () => {
 
     useEffect(() => {
         fetchData();
-        socketRef.current = io('http://localhost:5000');
+        socketRef.current = io(API_URL);
 
         socketRef.current.on('auctionUpdate', (data) => {
             setLiveAuction(data.isActive ? data : null);
@@ -64,18 +66,18 @@ const AdminDashboard = () => {
     }, []);
 
     const handlePlayerStatus = async (id, status) => {
-        await axios.patch(`http://localhost:5000/api/admin/players/${id}/status`, { status });
+        await axios.patch(`${API_URL}/api/admin/players/${id}/status`, { status });
         fetchData();
     };
 
     const handleTeamStatus = async (id, status) => {
-        await axios.patch(`http://localhost:5000/api/admin/teams/${id}/status`, { status });
+        await axios.patch(`${API_URL}/api/admin/teams/${id}/status`, { status });
         fetchData();
     };
 
     const handleBasePriceUpdate = async (id, basePrice) => {
         try {
-            await axios.patch(`http://localhost:5000/api/admin/players/${id}/base-price`, { basePrice });
+            await axios.patch(`${API_URL}/api/admin/players/${id}/base-price`, { basePrice });
             fetchData();
         } catch (err) {
             alert("Error updating base price");
@@ -95,7 +97,7 @@ const AdminDashboard = () => {
 
         setUploading(true);
         try {
-            const res = await axios.post('http://localhost:5000/api/admin/upload-players', formData, {
+            const res = await axios.post(`${API_URL}/api/admin/upload-players`, formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             alert(res.data.message);
@@ -123,7 +125,7 @@ const AdminDashboard = () => {
 
     const handleAdminApproval = async (id) => {
         try {
-            await axios.patch(`http://localhost:5000/api/admin/approve-admin/${id}`);
+            await axios.patch(`${API_URL}/api/admin/approve-admin/${id}`);
             alert('Admin Approved and email sent!');
             fetchData();
         } catch (err) {

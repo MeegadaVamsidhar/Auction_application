@@ -3,6 +3,8 @@ import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
+import API_URL from '../config';
+
 const CaptainRegister = () => {
     const [formData, setFormData] = useState({
         mobile: '',
@@ -16,7 +18,7 @@ const CaptainRegister = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await axios.post('http://localhost:5000/api/auth/register', formData);
+            await axios.post(`${API_URL}/api/auth/register`, formData);
             alert('Captain Account and Team Created! Please Login.');
             navigate('/captain-login');
         } catch (err) {

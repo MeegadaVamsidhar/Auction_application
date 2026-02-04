@@ -3,6 +3,8 @@ import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
+import API_URL from '../config';
+
 const PlayerLogin = () => {
     const [mobile, setMobile] = useState('');
     const [error, setError] = useState('');
@@ -13,7 +15,7 @@ const PlayerLogin = () => {
         try {
             setError('');
             // Verify if player exists
-            const res = await axios.post(`http://localhost:5000/api/players/login`, { mobile });
+            const res = await axios.post(`${API_URL}/api/players/login`, { mobile });
             if (res.data && res.data.player) {
                 // Store player info in local storage
                 localStorage.setItem('currentPlayer', JSON.stringify(res.data.player));

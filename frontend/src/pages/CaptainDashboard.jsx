@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import io from 'socket.io-client';
 
+import API_URL from '../config';
+
 const CaptainDashboard = () => {
     const [team, setTeam] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -27,7 +29,7 @@ const CaptainDashboard = () => {
             // Try fetching by user.team ID first
             if (user.team) {
                 try {
-                    const res = await axios.get(`http://localhost:5000/api/admin/teams/${user.team}`);
+                    const res = await axios.get(`${API_URL}/api/admin/teams/${user.team}`);
                     teamInfo = res.data;
                 } catch (e) {
                     console.log("Team ID in session failed, trying fallback...");
@@ -37,7 +39,7 @@ const CaptainDashboard = () => {
             // Fallback: Fetch by Captain ID if not found yet
             if (!teamInfo) {
                 try {
-                    const res = await axios.get(`http://localhost:5000/api/admin/teams/captain/${user.id || user._id}`);
+                    const res = await axios.get(`${API_URL}/api/admin/teams/captain/${user.id || user._id}`);
                     teamInfo = res.data;
 
                     // Sync localStorage with the found team ID
@@ -82,7 +84,7 @@ const CaptainDashboard = () => {
     useEffect(() => {
         fetchTeamData();
 
-        socketRef.current = io('http://localhost:5000');
+        socketRef.current = io(API_URL);
 
         socketRef.current.on('auctionUpdate', (data) => {
             if (data.isActive) {

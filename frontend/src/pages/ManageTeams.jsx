@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
+import API_URL from '../config';
+
 const ManageTeams = () => {
     const navigate = useNavigate();
     const [teams, setTeams] = useState([]);
@@ -15,7 +17,7 @@ const ManageTeams = () => {
 
     const fetchTeams = async () => {
         try {
-            const res = await axios.get('http://localhost:5000/api/admin/teams');
+            const res = await axios.get(`${API_URL}/api/admin/teams`);
             setTeams(res.data);
         } catch (err) {
             console.error(err);
@@ -29,7 +31,7 @@ const ManageTeams = () => {
     const handleDelete = async (id) => {
         if (confirm('Are you sure you want to delete this team?')) {
             try {
-                await axios.delete(`http://localhost:5000/api/admin/teams/${id}`);
+                await axios.delete(`${API_URL}/api/admin/teams/${id}`);
                 fetchTeams();
             } catch (err) {
                 alert('Error deleting team');
@@ -51,9 +53,9 @@ const ManageTeams = () => {
         e.preventDefault();
         try {
             if (editingTeam) {
-                await axios.put(`http://localhost:5000/api/admin/teams/${editingTeam._id}`, formData);
+                await axios.put(`${API_URL}/api/admin/teams/${editingTeam._id}`, formData);
             } else {
-                await axios.post('http://localhost:5000/api/admin/teams', formData);
+                await axios.post(`${API_URL}/api/admin/teams`, formData);
             }
             setShowModal(false);
             setEditingTeam(null);
@@ -99,8 +101,8 @@ const ManageTeams = () => {
                                 <td className="p-4 font-mono">₹{team.remainingPurse}L / ₹{team.initialPurse}L</td>
                                 <td className="p-4">
                                     <span className={`px-2 py-1 rounded text-xs uppercase font-bold ${team.status === 'approved' ? 'bg-green-500/10 text-green-500' :
-                                            team.status === 'rejected' ? 'bg-red-500/10 text-red-500' :
-                                                'bg-yellow-500/10 text-yellow-500'
+                                        team.status === 'rejected' ? 'bg-red-500/10 text-red-500' :
+                                            'bg-yellow-500/10 text-yellow-500'
                                         }`}>{team.status}</span>
                                 </td>
                                 <td className="p-4 flex gap-2">

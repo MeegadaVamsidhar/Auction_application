@@ -3,6 +3,8 @@ import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
+import API_URL from '../config';
+
 const Register = () => {
     const [formData, setFormData] = useState({
         username: '',
@@ -15,7 +17,7 @@ const Register = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await axios.post('http://localhost:5000/api/auth/register', formData);
+            await axios.post(`${API_URL}/api/auth/register`, formData);
             alert('Registration successful! Please login.');
             navigate('/login');
         } catch (err) {

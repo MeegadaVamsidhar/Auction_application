@@ -5,6 +5,8 @@ import { useNavigate } from 'react-router-dom';
 
 import io from 'socket.io-client';
 
+import API_URL from '../config';
+
 const PlayerStatus = () => {
     const [playerData, setPlayerData] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -23,7 +25,7 @@ const PlayerStatus = () => {
         // Initial Fetch
         const fetchStatus = async () => {
             try {
-                const res = await axios.get(`http://localhost:5000/api/players/status/${encodeURIComponent(player.name)}`);
+                const res = await axios.get(`${API_URL}/api/players/status/${encodeURIComponent(player.name)}`);
                 setPlayerData(res.data);
                 setLoading(false);
             } catch (err) {
@@ -34,7 +36,7 @@ const PlayerStatus = () => {
         fetchStatus();
 
         // Socket Listener for Live Updates
-        const socket = io('http://localhost:5000');
+        const socket = io(API_URL);
 
         socket.on('auctionUpdate', (data) => {
             if (data.isActive && data.currentPlayer?.name === player.name) {

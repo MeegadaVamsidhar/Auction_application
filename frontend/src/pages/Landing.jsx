@@ -5,6 +5,8 @@ import { User, Shield, Crown, Users, TrendingUp, UserCheck, UserX } from 'lucide
 import axios from 'axios';
 import io from 'socket.io-client';
 
+import API_URL from '../config';
+
 const Landing = () => {
     const [stats, setStats] = useState({
         totalPlayers: 0,
@@ -16,7 +18,7 @@ const Landing = () => {
     useEffect(() => {
         const fetchStats = async () => {
             try {
-                const res = await axios.get('http://localhost:5000/api/stats');
+                const res = await axios.get(`${API_URL}/api/stats`);
                 setStats(res.data);
             } catch (err) {
                 console.error("Error fetching stats:", err);
@@ -27,7 +29,7 @@ const Landing = () => {
         fetchStats();
 
         // Socket connection for real-time updates
-        const socket = io('http://localhost:5000');
+        const socket = io(API_URL);
 
         socket.on('playerSold', () => {
             console.log("Real-time Update: Player Sold");

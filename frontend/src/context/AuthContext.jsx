@@ -1,6 +1,8 @@
 import React, { createContext, useState, useEffect } from 'react';
 import axios from 'axios';
 
+import API_URL from '../config';
+
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
@@ -18,7 +20,7 @@ export const AuthProvider = ({ children }) => {
 
     const login = async (usernameOrMobile, password) => {
         // Send as both username and mobile to satisfy backend 'identifier' logic
-        const res = await axios.post('http://localhost:5000/api/auth/login', {
+        const res = await axios.post(`${API_URL}/api/auth/login`, {
             username: usernameOrMobile,
             mobile: usernameOrMobile,
             password
