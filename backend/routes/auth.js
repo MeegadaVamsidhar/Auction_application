@@ -63,22 +63,42 @@ router.post('/register', async (req, res) => {
                     { expiresIn: '7d' }
                 );
 
-                const approvalLink = `http://localhost:5000/api/admin/approve-via-email?token=${approvalToken}`;
+                // Determine base URLs
+                const protocol = req.protocol;
+                const host = req.get('host');
+                const backendUrl = `${protocol}://${host}`;
+                const frontendUrl = req.get('origin') || `${protocol}://${host.replace(':5000', ':5173')}`;
 
+                const approvalLink = `${backendUrl}/api/admin/approve-via-email?token=${approvalToken}`;
+
+                // 1. Notify System Admin (for approval)
                 await sendEmail(
                     process.env.EMAIL_USER || 'admin@auction.com',
                     'New Admin Registration Action Required',
                     `<h3>New Admin Registration</h3>
                      <p>A new user has registered as an Admin and requires approval.</p>
+                     <p><strong>Username:</strong> ${username}</p>
                      <p><strong>Mobile:</strong> ${mobile}</p>
                      ${email ? `<p><strong>Email:</strong> ${email}</p>` : ''}
                      <br/>
                      <a href="${approvalLink}" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">Approve Now</a>
                      <br/><br/>
-                     <p>Or login to the <a href="http://localhost:5173/admin/login">dashboard</a> to approve manually.</p>`
+                     <p>Or login to the <a href="${frontendUrl}/admin-login">dashboard</a> to approve manually.</p>`
                 );
+
+                // 2. Notify the Registering Admin (confirmation)
+                if (email) {
+                    await sendEmail(
+                        email,
+                        'Admin Registration Pending Approval',
+                        `<h3>Registration Received</h3>
+                         <p>Hello ${username},</p>
+                         <p>Your registration as an Admin has been received and is currently pending approval by the system administrator.</p>
+                         <p>You will receive another email once your account has been approved.</p>`
+                    );
+                }
             } catch (emailError) {
-                console.error("Failed to set admin notification email:", emailError);
+                console.error("Failed to send admin notification emails:", emailError);
             }
         }
 
