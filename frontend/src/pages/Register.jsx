@@ -17,11 +17,12 @@ const Register = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await axios.post(`${API_URL}/api/auth/register`, formData);
-            alert('Registration successful! Please login.');
+            const response = await axios.post(`${API_URL}/api/auth/register`, formData);
+            alert(response.data.message || 'Registration successful! Please login.');
             navigate('/login');
         } catch (err) {
-            alert(err.response?.data?.error || 'Registration failed');
+            const errorMessage = err.response?.data?.error || err.message || 'Registration failed';
+            alert(errorMessage);
         }
     };
 

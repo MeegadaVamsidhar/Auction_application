@@ -17,11 +17,12 @@ const AdminRegister = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await axios.post(`${API_URL}/api/auth/register`, formData);
-            alert('Admin Account Created! Please check your email for approval confirmation.');
+            const response = await axios.post(`${API_URL}/api/auth/register`, formData);
+            alert(response.data.message || 'Admin Account Created!');
             navigate('/admin-login');
         } catch (err) {
-            alert(err.response?.data?.error || 'Registration failed');
+            const errorMessage = err.response?.data?.error || err.message || 'Registration failed';
+            alert(errorMessage);
         }
     };
 

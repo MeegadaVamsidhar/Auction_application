@@ -65,6 +65,10 @@ router.post('/register', async (req, res) => {
                     console.error("ERROR: EMAIL_USER is not defined.");
                 }
 
+                if (!process.env.JWT_SECRET) {
+                    throw new Error("Server configuration error: JWT_SECRET is missing.");
+                }
+
                 const approvalToken = jwt.sign(
                     { id: user._id, action: 'approve_admin' },
                     process.env.JWT_SECRET,
@@ -131,12 +135,18 @@ router.post('/register', async (req, res) => {
             await user.save();
         }
 
-        res.status(201).json({ message: 'User registered successfully!' });
+        const successMessage = role === 'admin'
+            ? (emailSent ? 'Admin account created! Please check your email for approval.' : `Admin account saved, but notification failed: ${emailError || 'Unknown Error'}. Please contact support or approve manually.`)
+            : 'Registration successful!';
+
+        res.status(201).json({ message: successMessage, emailSent });
     } catch (err) {
+        console.error("Registration Error:", err);
         if (err.code === 11000) {
-            return res.status(400).json({ error: 'User already exists.' });
+            const field = Object.keys(err.keyPattern || {})[0] || 'account';
+            return res.status(400).json({ error: `This ${field} is already registered. Please login or use different details.` });
         }
-        res.status(400).json({ error: err.message });
+        res.status(400).json({ error: err.message || 'An unexpected error occurred during registration.' });
     }
 });
 
