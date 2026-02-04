@@ -193,7 +193,10 @@ const Landing = () => {
                                     <span className="opacity-0 group-hover:opacity-100 transition-opacity text-xs font-bold text-premium-gold">→</span>
                                 </div>
                                 <h2 className="text-xl font-bold text-white mb-2">PLAYER</h2>
-                                <p className="text-sm text-gray-500 leading-relaxed">View your auction status, sold price, and team allocation.</p>
+                                <p className="text-sm text-gray-500 leading-relaxed mb-6">View your auction status, sold price, and team allocation.</p>
+                                <Link to="/players" onClick={(e) => e.stopPropagation()} className="inline-block bg-premium-gold/10 text-premium-gold border border-premium-gold/30 px-4 py-2 rounded text-[10px] font-bold uppercase hover:bg-premium-gold hover:text-black transition-all">
+                                    See All Players
+                                </Link>
                             </motion.div>
                         </Link>
 

@@ -5,9 +5,9 @@ const Team = require('../models/Team');
 
 router.get('/', async (req, res) => {
     try {
-        const totalPlayers = await Player.countDocuments({ status: { $ne: 'pending' } });
+        const totalPlayers = await Player.countDocuments({}); // Count ALL players
         const soldPlayers = await Player.countDocuments({ status: 'sold' });
-        const unsoldPlayers = await Player.countDocuments({ status: 'unsold' });
+        const unsoldPlayers = await Player.countDocuments({ status: { $in: ['unsold', 'pending'] } }); // Include pending as potentially unsold
 
         const teams = await Team.find({ status: 'approved' }).select('name players');
         const teamStats = teams.map(team => ({

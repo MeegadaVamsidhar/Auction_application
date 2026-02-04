@@ -89,6 +89,18 @@ router.post('/login', async (req, res) => {
     }
 });
 
+// @route   GET /api/players
+// @desc    Get all players for the gallery
+// @access  Public
+router.get('/', async (req, res) => {
+    try {
+        const players = await Player.find({ status: { $ne: 'rejected' } }).select('-password').populate('team', 'name');
+        res.json(players);
+    } catch (err) {
+        res.status(500).json({ error: 'Server error fetching players' });
+    }
+});
+
 // @route   GET /api/players/status/:name
 // @desc    Get player status by name
 // @access  Public

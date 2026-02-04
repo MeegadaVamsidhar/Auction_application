@@ -19,6 +19,7 @@ import PlayerStatus from './pages/PlayerStatus';
 import TeamRegistration from './pages/TeamRegistration';
 import ManagePlayers from './pages/ManagePlayers';
 import ManageTeams from './pages/ManageTeams';
+import PlayerGallery from './pages/PlayerGallery';
 
 function App() {
     return (
@@ -26,6 +27,7 @@ function App() {
             <Router>
                 <Routes>
                     <Route path="/" element={<Landing />} />
+                    <Route path="/players" element={<PlayerGallery />} />
 
                     {/* Player Routes */}
                     <Route path="/player-login" element={<PlayerLogin />} />

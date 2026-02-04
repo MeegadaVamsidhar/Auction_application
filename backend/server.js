@@ -15,7 +15,10 @@ const io = new Server(server, {
 });
 
 // Connect to Database
-connectDB();
+connectDB().then(() => {
+    // Seed default admin
+    require('./utils/seed')();
+});
 
 // Middleware
 app.use(cors());
