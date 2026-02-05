@@ -10,8 +10,15 @@ const AdminDashboard = () => {
     const [teams, setTeams] = useState([]);
     const [pendingAdmins, setPendingAdmins] = useState([]);
     const [allAdmins, setAllAdmins] = useState([]);
-    const [bidIncrement, setBidIncrement] = useState(20);
     const [liveAuction, setLiveAuction] = useState(null);
+
+    const formatPrice = (value) => {
+        if (!value && value !== 0) return '₹0 L';
+        if (value >= 100) {
+            return `₹${(value / 100).toFixed(2)} Cr`;
+        }
+        return `₹${value} L`;
+    };
     const [uploading, setUploading] = useState(false);
     const [playerListLink, setPlayerListLink] = useState('');
     const [savedPlayerListLink, setSavedPlayerListLink] = useState('');
@@ -38,9 +45,10 @@ const AdminDashboard = () => {
 
     const savePlayerListLink = async () => {
         try {
-            await axios.post(`${API_URL}/api/admin/settings/player-list-link`, { link: playerListLink });
+            const res = await axios.post(`${API_URL}/api/admin/settings/player-list-link`, { link: playerListLink });
             setSavedPlayerListLink(playerListLink);
-            alert('Link saved successfully!');
+            alert(res.data.message || 'Link saved successfully!');
+            fetchData();
         } catch (err) {
             alert('Error saving link');
         }
@@ -85,7 +93,7 @@ const AdminDashboard = () => {
     };
 
     const startAuction = (player) => {
-        socketRef.current.emit('startAuction', { player, bidIncreaseAmount: bidIncrement });
+        socketRef.current.emit('startAuction', { player });
     };
 
     const handleFileUpload = async (e) => {
@@ -151,15 +159,6 @@ const AdminDashboard = () => {
                     <div className="premium-card p-4 h-[80vh] flex flex-col">
                         <div className="flex justify-between items-center mb-4 border-b border-gray-800 pb-2">
                             <h2 className="text-xl font-bold">PLAYER POOL</h2>
-                            <div className="flex items-center gap-1 text-xs">
-                                <span className="opacity-60">Inc(L):</span>
-                                <input
-                                    type="number"
-                                    value={bidIncrement}
-                                    onChange={e => setBidIncrement(e.target.value)}
-                                    className="w-12 bg-black/50 border border-premium-border rounded p-1 text-center"
-                                />
-                            </div>
                         </div>
 
                         {/* Excel Upload Section */}
@@ -266,7 +265,7 @@ const AdminDashboard = () => {
                                     {/* Sold Details */}
                                     {player.status === 'sold' && (
                                         <div className="mt-2 text-[10px] bg-black/40 p-1.5 rounded flex justify-between">
-                                            <span className="opacity-60">Sold Price: <span className="text-white font-mono">₹{player.soldPrice}L</span></span>
+                                            <span className="opacity-60">Sold Price: <span className="text-white font-mono">{formatPrice(player.soldPrice)}</span></span>
                                         </div>
                                     )}
                                 </div>
@@ -293,11 +292,14 @@ const AdminDashboard = () => {
 
                                 <div className="bg-black/40 p-4 rounded-xl border border-gray-700 text-center mb-6">
                                     <p className="text-xs opacity-50 uppercase mb-1">Current Highest Bid</p>
-                                    <p className="text-4xl font-mono font-black text-white mb-2">₹{liveAuction.highestBid}L</p>
+                                    <p className="text-4xl font-mono font-black text-white mb-2">{formatPrice(liveAuction.highestBid)}</p>
                                     <p className="text-premium-gold font-bold text-sm">
                                         {liveAuction.highestBidderName ? `Held by: ${liveAuction.highestBidderName}` : 'Waiting for bids...'}
                                     </p>
-                                    <div className="mt-4 text-xs font-mono text-gray-500">Timer: {liveAuction.timer}s</div>
+                                    <div className="mt-4 text-[10px] flex justify-between items-center opacity-50 font-mono">
+                                        <span>Next Inc: {formatPrice(liveAuction.bidIncreaseAmount)}</span>
+                                        <span>Timer: {liveAuction.timer}s</span>
+                                    </div>
                                 </div>
 
                                 {/* Bid Log */}
@@ -425,7 +427,7 @@ const AdminDashboard = () => {
                                             </span>
                                         </div>
                                         {team.status === 'approved' && (
-                                            <span className="text-premium-gold font-mono text-sm">Rem: ₹{team.remainingPurse}L</span>
+                                            <span className="text-premium-gold font-mono text-sm">Rem: {formatPrice(team.remainingPurse)}</span>
                                         )}
                                     </div>
 
@@ -442,7 +444,7 @@ const AdminDashboard = () => {
                                                     {team.players?.map(p => (
                                                         <div key={p._id} className="flex justify-between text-[10px] text-gray-400 border-b border-gray-800/50 pb-0.5">
                                                             <span>{p.name}</span>
-                                                            <span className="text-white font-mono">₹{p.soldPrice}L</span>
+                                                            <span className="text-white font-mono">{formatPrice(p.soldPrice)}</span>
                                                         </div>
                                                     ))}
                                                 </div>

@@ -2,13 +2,18 @@ const Player = require('../models/Player');
 const Team = require('../models/Team');
 
 module.exports = (io) => {
+    const getAutoIncrement = (currentBid) => {
+        if (currentBid < 100) return 5; // 5L increment up to 1Cr
+        return 20; // 20L increment from 1Cr onwards
+    };
+
     let auctionState = {
         currentPlayer: null,
         highestBid: 0,
         highestBidder: null, // Team ID
         timer: 30,
         isActive: false,
-        bidIncreaseAmount: 20 // Default fallback
+        bidIncreaseAmount: 5
     };
 
     let timerInterval = null;
@@ -22,12 +27,12 @@ module.exports = (io) => {
             const { player, bidIncreaseAmount } = data;
             auctionState = {
                 currentPlayer: player,
-                highestBid: 0, // Start at 0 so first bid = basePrice
+                highestBid: 0,
                 highestBidder: null,
                 highestBidderName: null,
-                timer: 30, // Visual timer only
+                timer: 30,
                 isActive: true,
-                bidIncreaseAmount: parseInt(bidIncreaseAmount) || 20,
+                bidIncreaseAmount: getAutoIncrement(player.basePrice || 0),
                 bidHistory: []
             };
 
@@ -65,10 +70,16 @@ module.exports = (io) => {
                 return;
             }
 
+            if (bidAmount % 1 !== 0) {
+                socket.emit('error', 'Bids must be in whole Lakhs only');
+                return;
+            }
+
             if (bidAmount > auctionState.highestBid) {
                 auctionState.highestBid = bidAmount;
                 auctionState.highestBidder = teamId;
                 auctionState.highestBidderName = team.name;
+                auctionState.bidIncreaseAmount = getAutoIncrement(bidAmount);
 
                 // Add to history
                 auctionState.bidHistory.unshift({

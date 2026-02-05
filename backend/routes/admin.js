@@ -197,12 +197,19 @@ router.post('/upload-players', upload.single('file'), async (req, res) => {
                     continue;
                 }
 
-                // Check for valid roles
-                const validRoles = ['Batsman', 'Bowler', 'All-rounder', 'Wicket-keeper'];
-                if (player.role && !validRoles.includes(player.role)) {
-                    // Try to normalize
-                    if (player.role === 'All Rounder') player.role = 'All-rounder';
-                    else player.role = 'Batsman'; // Default or handled error
+                // Normalize Role to match Enum
+                const roleUpper = player.role ? player.role.toString().toUpperCase().trim() : '';
+
+                if (roleUpper.includes('BATSMAN') && !roleUpper.includes('ALLROUNDER')) {
+                    player.role = 'BATSMAN';
+                } else if (roleUpper === 'BOWLING' || roleUpper === 'BOWLER') {
+                    player.role = 'BOWLING';
+                } else if (roleUpper.includes('BOWLING ALLROUNDER') || roleUpper.includes('BOWLING ALL ROUNDER')) {
+                    player.role = 'BOWLING ALLROUNDER';
+                } else if (roleUpper.includes('BATTING ALLROUNDER') || roleUpper.includes('BATTING ALL ROUNDER')) {
+                    player.role = 'BATTING ALLROUNDER';
+                } else {
+                    player.role = 'BATSMAN'; // Default
                 }
 
                 players.push(player);
@@ -320,16 +327,101 @@ router.get('/settings/player-list-link', async (req, res) => {
     }
 });
 
-// Update Player List Link
+// Update Player List Link & Sync from Google Sheets
 router.post('/settings/player-list-link', async (req, res) => {
     try {
         const { link } = req.body;
+        const axios = require('axios');
         const Settings = require('../models/Settings');
+
         const setting = await Settings.findOneAndUpdate(
             { key: 'player_list_link' },
             { value: link },
-            { new: true, upsert: true } // Create if not exists
+            { new: true, upsert: true }
         );
+
+        // SYNC LOGIC
+        if (link && link.includes('docs.google.com/spreadsheets')) {
+            try {
+                let csvUrl = link;
+                if (link.includes('/edit')) {
+                    csvUrl = link.split('/edit')[0] + '/export?format=csv';
+                } else if (!link.endsWith('/export?format=csv')) {
+                    csvUrl = link.replace(/\/$/, '') + '/export?format=csv';
+                }
+
+                console.log("Syncing from:", csvUrl);
+                const response = await axios.get(csvUrl, { responseType: 'arraybuffer' });
+                const workbook = xlsx.read(response.data, { type: 'buffer' });
+                const sheetName = workbook.SheetNames[0];
+                const sheet = workbook.Sheets[sheetName];
+                const playersData = xlsx.utils.sheet_to_json(sheet);
+
+                const players = [];
+                for (const data of playersData) {
+                    const player = {
+                        name: data.Name || data.name,
+                        mobile: data.Mobile ? data.Mobile.toString() : (data.mobile ? data.mobile.toString() : null),
+                        year: data.Year || data.year,
+                        previousTeams: data.PreviousTeams || data.previousTeams || data['Previous teams played for'],
+                        role: data.Role || data.role,
+                        dept: data.Dept || data.dept || 'N/A',
+                        status: 'approved'
+                    };
+
+                    if (player.name && player.mobile) {
+                        // Normalize Role to match Enum
+                        const roleUpper = player.role ? player.role.toString().toUpperCase().trim() : '';
+
+                        if (roleUpper.includes('BATSMAN') && !roleUpper.includes('ALLROUNDER')) {
+                            player.role = 'BATSMAN';
+                        } else if (roleUpper === 'BOWLING' || roleUpper === 'BOWLER') {
+                            player.role = 'BOWLING';
+                        } else if (roleUpper.includes('BOWLING ALLROUNDER') || roleUpper.includes('BOWLING ALL ROUNDER')) {
+                            player.role = 'BOWLING ALLROUNDER';
+                        } else if (roleUpper.includes('BATTING ALLROUNDER') || roleUpper.includes('BATTING ALL ROUNDER')) {
+                            player.role = 'BATTING ALLROUNDER';
+                        } else {
+                            // Fallback
+                            player.role = 'BATSMAN';
+                        }
+
+                        players.push(player);
+                    }
+                }
+
+                if (players.length > 0) {
+                    const stats = { added: 0, updated: 0 };
+
+                    for (const pData of players) {
+                        const result = await Player.findOneAndUpdate(
+                            { mobile: pData.mobile },
+                            { $set: pData },
+                            { upsert: true, new: true, rawResult: true }
+                        );
+
+                        if (result.lastErrorObject.updatedExisting) {
+                            stats.updated++;
+                        } else {
+                            stats.added++;
+                        }
+                    }
+
+                    return res.json({
+                        message: `Sync Complete: Added ${stats.added} new players, Updated ${stats.updated} existing players.`,
+                        link: setting.value
+                    });
+                }
+            } catch (syncErr) {
+                console.error("Sync Error:", syncErr.message);
+                return res.json({
+                    message: "Link saved but sync failed (check permissions).",
+                    error: syncErr.message,
+                    link: setting.value
+                });
+            }
+        }
+
         res.json(setting);
     } catch (err) {
         res.status(500).json({ error: err.message });

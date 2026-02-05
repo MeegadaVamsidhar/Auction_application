@@ -124,8 +124,8 @@ router.post('/register', async (req, res) => {
         if (role === 'captain') {
             const team = new Team({
                 name: teamName,
-                initialPurse: 100, // Representing 100 CR
-                remainingPurse: 100,
+                initialPurse: 8000, // Representing 80 CR (8000 Lakhs)
+                remainingPurse: 8000,
                 captain: user._id
             });
             await team.save();
@@ -220,8 +220,8 @@ router.post('/create-team', async (req, res) => {
 
         const team = new Team({
             name: teamName,
-            initialPurse: 100,
-            remainingPurse: 100,
+            initialPurse: 8000, // Representing 80 CR (8000 Lakhs)
+            remainingPurse: 8000,
             captain: user._id
         });
         await team.save();

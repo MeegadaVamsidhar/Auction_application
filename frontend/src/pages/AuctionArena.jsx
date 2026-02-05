@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import io from 'socket.io-client';
 import { Trophy, Clock, User as UserIcon } from 'lucide-react';
@@ -14,18 +15,46 @@ const AuctionArena = () => {
     const [teams, setTeams] = useState([]);
     const [bidAmount, setBidAmount] = useState(0);
 
+    const fetchData = async () => {
+        try {
+            const res = await axios.get(`${API_URL}/api/players`);
+            // Usually we fetch teams from an endpoint
+            const teamsRes = await axios.get(`${API_URL}/api/admin/teams`);
+            setTeams(teamsRes.data);
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
     useEffect(() => {
+        fetchData();
         socket.on('auctionUpdate', (data) => {
             setAuctionData(data);
             if (data && data.highestBid !== undefined) {
                 // Calculate next bid: Highest Bid + Increment (or Base Price if no bid yet)
-                const nextBid = data.highestBid === 0 ? (data.currentPlayer?.basePrice || 0) : data.highestBid + (data.bidIncreaseAmount || 20);
+                const currentVal = data.highestBid === 0 ? (data.currentPlayer?.basePrice || 0) : data.highestBid;
+                const nextBid = data.highestBid === 0 ? currentVal : currentVal + (data.bidIncreaseAmount || 5);
                 setBidAmount(nextBid);
             }
         });
 
-        return () => socket.off('auctionUpdate');
+        socket.on('playerSold', () => fetchData());
+        socket.on('playerUnsold', () => fetchData());
+
+        return () => {
+            socket.off('auctionUpdate');
+            socket.off('playerSold');
+            socket.off('playerUnsold');
+        };
     }, []);
+
+    const formatPrice = (value) => {
+        if (!value && value !== 0) return '₹0 L';
+        if (value >= 100) {
+            return `₹${(value / 100).toFixed(2)} Cr`;
+        }
+        return `₹${value} L`;
+    };
 
     const handleBid = () => {
         // In a real app, teamId would come from the logged-in captain's user object
@@ -101,12 +130,12 @@ const AuctionArena = () => {
                                         <div className="grid grid-cols-2 gap-4 mb-8">
                                             <div>
                                                 <p className="text-xs opacity-50 uppercase">Base Price</p>
-                                                <p className="text-lg md:text-xl font-mono">₹{auctionData.currentPlayer.basePrice} L</p>
+                                                <p className="text-lg md:text-xl font-mono">{formatPrice(auctionData.currentPlayer.basePrice)}</p>
                                             </div>
                                             <div>
                                                 <p className="text-xs opacity-50 uppercase">Current Bid</p>
                                                 <p className="text-2xl md:text-3xl font-black text-premium-gold font-mono transition-all">
-                                                    ₹{auctionData.highestBid} L
+                                                    {formatPrice(auctionData.highestBid)}
                                                 </p>
                                             </div>
                                         </div>
@@ -114,9 +143,10 @@ const AuctionArena = () => {
                                         <div className="flex flex-col sm:flex-row gap-4">
                                             <input
                                                 type="number"
+                                                step="1"
                                                 className="w-full p-3 md:p-4 bg-black/50 border border-premium-border rounded-lg text-xl md:text-2xl font-mono text-center md:text-left"
                                                 value={bidAmount}
-                                                onChange={(e) => setBidAmount(Number(e.target.value))}
+                                                onChange={(e) => setBidAmount(parseInt(e.target.value) || 0)}
                                             />
                                             <button
                                                 onClick={handleBid}
@@ -141,17 +171,20 @@ const AuctionArena = () => {
                     <h2 className="text-lg md:text-xl font-bold mb-4 opacity-70 border-b border-gray-700 pb-2 lg:border-none lg:pb-0">TEAM STANDINGS</h2>
                     {/* Placeholder for teams - usually fetched from API */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
-                        {[1, 2, 3, 4].map(i => (
-                            <div key={i} className="premium-card p-4 flex justify-between items-center bg-black/30">
-                                <div>
-                                    <p className="font-bold text-sm md:text-base">TEAM {i}</p>
-                                    <p className="text-xs opacity-50">SQUAD: 8/15</p>
+                        {teams.filter(t => t.status === 'approved').map(team => (
+                            <div key={team._id} className="premium-card p-4 flex justify-between items-center bg-black/30">
+                                <div className="flex-1 min-w-0">
+                                    <p className="font-bold text-sm md:text-base truncate">{team.name}</p>
+                                    <p className="text-xs opacity-50">SQUAD: {team.players?.length || 0}/{team.maxPlayers || 15}</p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-premium-gold font-mono text-sm md:text-base">₹85.5 Cr</p>
+                                    <p className="text-premium-gold font-mono text-sm md:text-base">{formatPrice(team.remainingPurse)}</p>
                                 </div>
                             </div>
                         ))}
+                        {teams.filter(t => t.status === 'approved').length === 0 && (
+                            <p className="text-xs opacity-30 italic">No approved teams yet.</p>
+                        )}
                     </div>
                 </div>
 

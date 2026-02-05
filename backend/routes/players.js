@@ -101,16 +101,16 @@ router.get('/', async (req, res) => {
     }
 });
 
-// @route   GET /api/players/status/:name
-// @desc    Get player status by name
+// @route   GET /status/mobile/:mobile
+// @desc    Get player status by mobile number
 // @access  Public
-router.get('/status/:name', async (req, res) => {
+router.get('/status/mobile/:mobile', async (req, res) => {
     try {
-        const player = await Player.findOne({ name: { $regex: new RegExp(`^${req.params.name}$`, 'i') } }).populate('team', 'name');
+        const player = await Player.findOne({ mobile: req.params.mobile }).populate('team', 'name');
         if (!player) return res.status(404).json({ error: 'Player not found' });
         res.json(player);
     } catch (err) {
-        res.status(500).json({ error: 'Server error' });
+        res.status(500).json({ error: 'Server error check by mobile' });
     }
 });
 

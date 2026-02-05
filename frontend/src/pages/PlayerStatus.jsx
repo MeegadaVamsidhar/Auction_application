@@ -25,7 +25,7 @@ const PlayerStatus = () => {
         // Initial Fetch
         const fetchStatus = async () => {
             try {
-                const res = await axios.get(`${API_URL}/api/players/status/${encodeURIComponent(player.name)}`);
+                const res = await axios.get(`${API_URL}/api/players/status/mobile/${player.mobile}`);
                 setPlayerData(res.data);
                 setLoading(false);
             } catch (err) {

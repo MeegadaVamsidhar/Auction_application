@@ -13,6 +13,14 @@ const CaptainDashboard = () => {
 
     const [error, setError] = useState(null);
 
+    const formatPrice = (value) => {
+        if (!value && value !== 0) return '₹0 L';
+        if (value >= 100) {
+            return `₹${(value / 100).toFixed(2)} Cr`;
+        }
+        return `₹${value} L`;
+    };
+
     const fetchTeamData = async () => {
         try {
             const userData = localStorage.getItem('user');
@@ -89,7 +97,8 @@ const CaptainDashboard = () => {
         socketRef.current.on('auctionUpdate', (data) => {
             if (data.isActive) {
                 setLiveAuction(data);
-                const calculatedBid = data.highestBid === 0 ? (data.currentPlayer?.basePrice || 0) : data.highestBid + (data.bidIncreaseAmount || 20);
+                const currentVal = data.highestBid === 0 ? (data.currentPlayer?.basePrice || 0) : data.highestBid;
+                const calculatedBid = data.highestBid === 0 ? currentVal : currentVal + (data.bidIncreaseAmount || 5);
                 setNextBidAmount(calculatedBid);
             } else {
                 setLiveAuction(null);
@@ -209,7 +218,7 @@ const CaptainDashboard = () => {
                     <div className="flex justify-between items-end border-t border-gray-800 pt-4">
                         <div>
                             <p className="text-xs opacity-50 uppercase">Purse Remaining</p>
-                            <p className="text-3xl font-mono font-bold text-green-400">₹{team.remainingPurse}L</p>
+                            <p className="text-3xl font-mono font-bold text-green-400">{formatPrice(team.remainingPurse)}</p>
                         </div>
                         <div className="text-right">
                             <p className="text-xs opacity-50 uppercase">Squad</p>
@@ -233,7 +242,7 @@ const CaptainDashboard = () => {
                                         <span>W:{player.stats?.wickets || 0}</span>
                                     </div>
                                 </div>
-                                <p className="font-mono text-premium-gold font-bold">₹{player.soldPrice}L</p>
+                                <p className="font-mono text-premium-gold font-bold">{formatPrice(player.soldPrice)}</p>
                             </div>
                         ))}
                     </div>
@@ -257,7 +266,7 @@ const CaptainDashboard = () => {
                                 {liveAuction.currentPlayer?.previousTeams && (
                                     <p className="text-premium-gold font-bold text-sm mb-1 uppercase tracking-tight">Prev Teams: {liveAuction.currentPlayer.previousTeams}</p>
                                 )}
-                                <p className="text-premium-gold font-black italic mb-4">BASE PRICE: ₹{liveAuction.currentPlayer?.basePrice || 0}L</p>
+                                <p className="text-premium-gold font-black italic mb-4">BASE PRICE: {formatPrice(liveAuction.currentPlayer?.basePrice)}</p>
                                 <div className="flex gap-4 text-sm font-mono text-gray-400">
                                     <span className="bg-black/40 px-3 py-1 rounded">Matches: {liveAuction.currentPlayer?.stats?.matches}</span>
                                     <span className="bg-black/40 px-3 py-1 rounded">Runs: {liveAuction.currentPlayer?.stats?.runs}</span>
@@ -271,9 +280,9 @@ const CaptainDashboard = () => {
                             {/* Stats/Current Bid */}
                             <div className="p-6 bg-black/20 flex flex-col justify-center items-center border-r border-gray-800">
                                 <p className="text-sm opacity-50 uppercase mb-2">Current Price</p>
-                                <div className="text-5xl font-black text-white mb-2 font-mono">₹{liveAuction.highestBid === 0 ? liveAuction.currentPlayer?.basePrice : liveAuction.highestBid}L</div>
+                                <div className="text-5xl font-black text-white mb-2 font-mono">{formatPrice(liveAuction.highestBid === 0 ? liveAuction.currentPlayer?.basePrice : liveAuction.highestBid)}</div>
                                 <p className="text-xs text-gray-400 mb-2 uppercase">
-                                    Base Price: <span className="text-white">₹{liveAuction.currentPlayer?.basePrice}L</span>
+                                    Base Price: <span className="text-white">{formatPrice(liveAuction.currentPlayer?.basePrice)}</span>
                                 </p>
                                 <p className="text-premium-gold font-bold mb-8 italic">
                                     {liveAuction.highestBidderName ? `Held by: ${liveAuction.highestBidderName}` : 'Waiting for Opening Bid'}
@@ -288,7 +297,7 @@ const CaptainDashboard = () => {
                                         : 'btn-gold shadow-lg shadow-premium-gold/20 hover:shadow-premium-gold/40'
                                         }`}
                                 >
-                                    {team.remainingPurse < nextBidAmount ? 'INSUFFICIENT FUNDS' : `BID ₹${nextBidAmount}L`}
+                                    {team.remainingPurse < nextBidAmount ? 'INSUFFICIENT FUNDS' : `BID ${formatPrice(nextBidAmount)}`}
                                 </button>
                                 <p className="text-xs text-gray-500 mt-4">Timer: {liveAuction.timer}s</p>
                             </div>
@@ -302,7 +311,7 @@ const CaptainDashboard = () => {
                                             <span className={log.teamName === team.name ? "text-premium-gold font-bold" : "text-gray-300"}>
                                                 {log.teamName === team.name ? "YOU" : log.teamName}
                                             </span>
-                                            <span className="text-white font-bold">₹{log.amount}L</span>
+                                            <span className="text-white font-bold">{formatPrice(log.amount)}</span>
                                         </div>
                                     ))}
                                     {(!liveAuction.bidHistory || liveAuction.bidHistory.length === 0) && (

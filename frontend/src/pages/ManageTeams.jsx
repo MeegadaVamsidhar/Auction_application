@@ -11,9 +11,17 @@ const ManageTeams = () => {
     const [editingTeam, setEditingTeam] = useState(null);
     const [formData, setFormData] = useState({
         name: '',
-        initialPurse: 2000,
+        initialPurse: 8000,
         status: 'approved'
     });
+
+    const formatPrice = (value) => {
+        if (!value && value !== 0) return '₹0 L';
+        if (value >= 100) {
+            return `₹${(value / 100).toFixed(2)} Cr`;
+        }
+        return `₹${value} L`;
+    };
 
     const fetchTeams = async () => {
         try {
@@ -59,7 +67,7 @@ const ManageTeams = () => {
             }
             setShowModal(false);
             setEditingTeam(null);
-            setFormData({ name: '', initialPurse: 2000, status: 'approved' });
+            setFormData({ name: '', initialPurse: 8000, status: 'approved' });
             fetchTeams();
         } catch (err) {
             alert(err.response?.data?.error || 'Error saving team');
@@ -74,7 +82,7 @@ const ManageTeams = () => {
             </div>
 
             <button
-                onClick={() => { setEditingTeam(null); setFormData({ name: '', initialPurse: 2000, status: 'approved' }); setShowModal(true); }}
+                onClick={() => { setEditingTeam(null); setFormData({ name: '', initialPurse: 8000, status: 'approved' }); setShowModal(true); }}
                 className="btn-gold mb-6 py-2 px-4 text-xs"
             >
                 + Add New Team
@@ -98,7 +106,7 @@ const ManageTeams = () => {
                                 <td className="p-4 font-bold">{team.name}</td>
                                 <td className="p-4">{team.captain ? team.captain.username : <span className="opacity-50 italic">None</span>}</td>
                                 <td className="p-4">{team.players ? team.players.length : 0}</td>
-                                <td className="p-4 font-mono">₹{team.remainingPurse}L / ₹{team.initialPurse}L</td>
+                                <td className="p-4 font-mono">{formatPrice(team.remainingPurse)} / {formatPrice(team.initialPurse)}</td>
                                 <td className="p-4">
                                     <span className={`px-2 py-1 rounded text-xs uppercase font-bold ${team.status === 'approved' ? 'bg-green-500/10 text-green-500' :
                                         team.status === 'rejected' ? 'bg-red-500/10 text-red-500' :

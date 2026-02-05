@@ -11,17 +11,8 @@ const PlayerRegistration = () => {
         name: '',
         mobile: '',
         previousTeams: '',
-        dept: '',
         year: '',
-        role: 'Batsman',
-        battingStyle: 'Right-hand',
-        bowlingStyle: 'N/A',
-        contact: '',
-        stats: {
-            matches: 0,
-            runs: 0,
-            wickets: 0
-        }
+        role: ''
     });
 
     const handleSubmit = async (e) => {
@@ -48,98 +39,58 @@ const PlayerRegistration = () => {
                 <h2 className="text-3xl font-black italic text-premium-gold mb-6 border-b border-premium-border pb-4">PLAYER REGISTRATION</h2>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
                         <div>
-                            <label className="block text-sm font-bold opacity-60 mb-2">Full Name</label>
-                            <input type="text" required className="w-full p-3 bg-black/50 border border-premium-border rounded"
+                            <label className="block text-sm font-bold opacity-60 mb-2">FULL NAME *</label>
+                            <input type="text" required className="w-full p-3 bg-black/50 border border-premium-border rounded focus:border-premium-gold outline-none"
                                 value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
                         </div>
+
                         <div>
-                            <label className="block text-sm font-bold opacity-60 mb-2">Mobile Number (Login ID)</label>
-                            <input type="tel" required className="w-full p-3 bg-black/50 border border-premium-border rounded text-premium-gold font-mono"
-                                value={formData.mobile} onChange={e => setFormData({ ...formData, mobile: e.target.value })} placeholder="e.g. 9876543210" />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-bold opacity-60 mb-2">Previous Teams Played For</label>
-                            <input type="text" className="w-full p-3 bg-black/50 border border-premium-border rounded"
-                                value={formData.previousTeams} onChange={e => setFormData({ ...formData, previousTeams: e.target.value })} placeholder="e.g. Team A, Team B" />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-bold opacity-60 mb-2">Department</label>
-                            <input type="text" required className="w-full p-3 bg-black/50 border border-premium-border rounded"
-                                value={formData.dept} onChange={e => setFormData({ ...formData, dept: e.target.value })} />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-bold opacity-60 mb-2">Year</label>
-                            <select className="w-full p-3 bg-black/50 border border-premium-border rounded"
+                            <label className="block text-sm font-bold opacity-60 mb-2">YEAR *</label>
+                            <select required className="w-full p-3 bg-black/50 border border-premium-border rounded focus:border-premium-gold outline-none"
                                 value={formData.year} onChange={e => setFormData({ ...formData, year: e.target.value })}>
                                 <option value="">Select Year</option>
-                                <option value="1st">1st Year</option>
-                                <option value="2nd">2nd Year</option>
-                                <option value="3rd">3rd Year</option>
-                                <option value="4th">4th Year</option>
+                                <option value="1ST YEAR">1ST YEAR</option>
+                                <option value="2ND YEAR">2ND YEAR</option>
+                                <option value="3RD YEAR">3RD YEAR</option>
+                                <option value="4TH YEAR">4TH YEAR</option>
+                                <option value="MTECH">MTECH</option>
                             </select>
                         </div>
+
                         <div>
-                            <label className="block text-sm font-bold opacity-60 mb-2">Role</label>
-                            <select className="w-full p-3 bg-black/50 border border-premium-border rounded"
+                            <label className="block text-sm font-bold opacity-60 mb-2">ROLE *</label>
+                            <select required className="w-full p-3 bg-black/50 border border-premium-border rounded focus:border-premium-gold outline-none"
                                 value={formData.role} onChange={e => setFormData({ ...formData, role: e.target.value })}>
-                                <option>Batsman</option>
-                                <option>Bowler</option>
-                                <option>All Rounder</option>
-                                <option>Wicket-keeper</option>
+                                <option value="">Select Role</option>
+                                <option value="BATSMAN">BATSMAN</option>
+                                <option value="BOWLING">BOWLING</option>
+                                <option value="BOWLING ALLROUNDER">BOWLING ALLROUNDER</option>
+                                <option value="BATTING ALLROUNDER">BATTING ALLROUNDER</option>
                             </select>
                         </div>
-                    </div>
 
-                    {/* Section 2: Cricketing Info */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label className="block text-xs font-bold uppercase text-gray-400 mb-2">Batting Style</label>
-                            <select className="w-full p-3 bg-black/50 border border-premium-border rounded focus:border-premium-gold outline-none text-white"
-                                value={formData.battingStyle}
-                                onChange={e => setFormData({ ...formData, battingStyle: e.target.value })}>
-                                <option>Right-hand</option><option>Left-hand</option>
-                            </select>
+                            <label className="block text-sm font-bold opacity-60 mb-2">Phone Number *</label>
+                            <input type="tel" required className="w-full p-3 bg-black/50 border border-premium-border rounded text-premium-gold font-mono focus:border-premium-gold outline-none"
+                                value={formData.mobile} onChange={e => setFormData({ ...formData, mobile: e.target.value })} placeholder="Enter your mobile number" />
                         </div>
+
                         <div>
-                            <label className="block text-xs font-bold uppercase text-gray-400 mb-2">Bowling Style</label>
-                            <input
-                                type="text"
-                                placeholder="e.g. Right-arm Fast"
-                                className="w-full p-3 bg-black/50 border border-premium-border rounded focus:border-premium-gold outline-none text-white"
-                                value={formData.bowlingStyle}
-                                onChange={e => setFormData({ ...formData, bowlingStyle: e.target.value })}
-                            />
+                            <label className="block text-sm font-bold opacity-60 mb-2">PREVIOUS TEAM ( If any) *</label>
+                            <textarea required className="w-full p-3 bg-black/50 border border-premium-border rounded focus:border-premium-gold outline-none min-h-[100px]"
+                                value={formData.previousTeams} onChange={e => setFormData({ ...formData, previousTeams: e.target.value })}
+                                placeholder="List previous teams or write 'N/A'" />
                         </div>
                     </div>
 
-
-                    {/* Section 3: Stats */}
-                    <div>
-                        <h3 className="text-premium-gold font-bold uppercase tracking-wider mb-4 border-b border-gray-800 pb-2">Previous Stats (Optional)</h3>
-                        <div className="grid grid-cols-3 gap-4">
-                            <div>
-                                <label className="block text-xs font-bold uppercase text-gray-400 mb-2">Matches</label>
-                                <input type="number" className="w-full p-3 bg-black/50 border border-premium-border rounded focus:border-premium-gold outline-none text-white"
-                                    onChange={e => setFormData({ ...formData, stats: { ...formData.stats, matches: e.target.value } })} />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold uppercase text-gray-400 mb-2">Runs</label>
-                                <input type="number" className="w-full p-3 bg-black/50 border border-premium-border rounded focus:border-premium-gold outline-none text-white"
-                                    onChange={e => setFormData({ ...formData, stats: { ...formData.stats, runs: e.target.value } })} />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold uppercase text-gray-400 mb-2">Wickets</label>
-                                <input type="number" className="w-full p-3 bg-black/50 border border-premium-border rounded focus:border-premium-gold outline-none text-white"
-                                    onChange={e => setFormData({ ...formData, stats: { ...formData.stats, wickets: e.target.value } })} />
-                            </div>
-                        </div>
+                    <div className="pt-4">
+                        <p className="text-[10px] text-gray-500 mb-4">* All fields are required as per GULTI 2K26 registration.</p>
+                        <button type="submit" className="w-full btn-gold py-4 text-xl font-black italic shadow-lg shadow-premium-gold/20 hover:scale-[1.02] transition-transform">
+                            SUBMIT REGISTRATION
+                        </button>
                     </div>
-
-                    <button type="submit" className="w-full btn-gold py-4 text-xl font-black italic shadow-lg shadow-premium-gold/20 hover:scale-[1.02] transition-transform">
-                        SUBMIT REGISTRATION
-                    </button>
                 </form>
             </motion.div>
         </div >

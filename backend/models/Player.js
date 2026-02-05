@@ -2,9 +2,9 @@ const mongoose = require('mongoose');
 
 const playerSchema = new mongoose.Schema({
     name: { type: String, required: true },
-    dept: { type: String, required: true },
+    dept: { type: String, default: 'N/A' },
     year: { type: String, required: true },
-    role: { type: String, enum: ['Batsman', 'Bowler', 'All-rounder', 'Wicket-keeper'], required: true },
+    role: { type: String, enum: ['BATSMAN', 'BOWLING', 'BOWLING ALLROUNDER', 'BATTING ALLROUNDER'], required: true },
     battingStyle: { type: String },
     bowlingStyle: { type: String },
     image: { type: String }, // URL to image
@@ -12,7 +12,7 @@ const playerSchema = new mongoose.Schema({
     mobile: { type: String, required: true, unique: true },
     password: { type: String, required: false },
     previousTeams: { type: String },
-    basePrice: { type: Number, default: 0 },
+    basePrice: { type: Number, default: 5 },
     status: { type: String, enum: ['pending', 'approved', 'rejected', 'sold', 'unsold'], default: 'pending' },
     soldPrice: { type: Number },
     team: { type: mongoose.Schema.Types.ObjectId, ref: 'Team' },

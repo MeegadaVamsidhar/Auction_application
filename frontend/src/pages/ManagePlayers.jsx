@@ -12,12 +12,20 @@ const ManagePlayers = () => {
     const [formData, setFormData] = useState({
         name: '',
         mobile: '',
-        role: 'Batsman',
-        dept: '',
+        role: 'BATSMAN',
+        dept: 'N/A',
         year: '',
-        basePrice: 0,
+        basePrice: 5,
         status: 'approved'
     });
+
+    const formatPrice = (value) => {
+        if (!value && value !== 0) return '₹0 L';
+        if (value >= 100) {
+            return `₹${(value / 100).toFixed(2)} Cr`;
+        }
+        return `₹${value} L`;
+    };
 
     const fetchPlayers = async () => {
         try {
@@ -73,7 +81,7 @@ const ManagePlayers = () => {
             }
             setShowModal(false);
             setEditingPlayer(null);
-            setFormData({ name: '', mobile: '', role: 'Batsman', dept: '', year: '', basePrice: 0, status: 'approved' });
+            setFormData({ name: '', mobile: '', role: 'BATSMAN', dept: 'N/A', year: '', basePrice: 5, status: 'approved' });
             fetchPlayers();
         } catch (err) {
             alert(err.response?.data?.error || 'Error saving player');
@@ -88,7 +96,7 @@ const ManagePlayers = () => {
             </div>
 
             <button
-                onClick={() => { setEditingPlayer(null); setFormData({ name: '', mobile: '', role: 'Batsman', dept: '', year: '', basePrice: 0, status: 'approved' }); setShowModal(true); }}
+                onClick={() => { setEditingPlayer(null); setFormData({ name: '', mobile: '', role: 'BATSMAN', dept: 'N/A', year: '', basePrice: 5, status: 'approved' }); setShowModal(true); }}
                 className="btn-gold mb-6 py-2 px-4 text-xs"
             >
                 + Add New Player
@@ -112,7 +120,7 @@ const ManagePlayers = () => {
                                 <td className="p-4 font-bold">{player.name}</td>
                                 <td className="p-4">{player.role}</td>
                                 <td className="p-4">{player.dept} / {player.year}</td>
-                                <td className="p-4 font-mono">₹{player.basePrice}L</td>
+                                <td className="p-4 font-mono">{formatPrice(player.basePrice)}</td>
                                 <td className="p-4">
                                     <span className={`px-2 py-1 rounded text-xs uppercase font-bold ${player.status === 'approved' ? 'bg-green-500/10 text-green-500' :
                                         player.status === 'sold' ? 'bg-blue-500/10 text-blue-500' :
@@ -150,10 +158,10 @@ const ManagePlayers = () => {
                                 <div>
                                     <label className="block text-xs uppercase text-gray-400 mb-1">Role</label>
                                     <select value={formData.role} onChange={e => setFormData({ ...formData, role: e.target.value })} className="w-full bg-black/50 border border-gray-700 rounded p-2 text-white">
-                                        <option>Batsman</option>
-                                        <option>Bowler</option>
-                                        <option>All-rounder</option>
-                                        <option>Wicket-keeper</option>
+                                        <option value="BATSMAN">BATSMAN</option>
+                                        <option value="BOWLING">BOWLING</option>
+                                        <option value="BOWLING ALLROUNDER">BOWLING ALLROUNDER</option>
+                                        <option value="BATTING ALLROUNDER">BATTING ALLROUNDER</option>
                                     </select>
                                 </div>
                                 <div>

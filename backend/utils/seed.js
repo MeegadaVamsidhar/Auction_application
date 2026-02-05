@@ -2,20 +2,20 @@ const Admin = require('../models/Admin');
 
 const seedAdmin = async () => {
     try {
-        const defaultMobile = '0000000000';
+        const defaultMobile = process.env.ADMIN_MOBILE || '0000000000';
         const existingAdmin = await Admin.findOne({ mobile: defaultMobile });
 
         if (!existingAdmin) {
             const admin = new Admin({
-                username: 'admin',
+                username: process.env.ADMIN_USERNAME || 'admin',
                 mobile: defaultMobile,
                 email: 'reddymeegada22@gmail.com',
-                password: 'admin123',
+                password: process.env.ADMIN_PASSWORD || 'admin123',
                 role: 'admin',
                 isApproved: true
             });
             await admin.save();
-            console.log('✅ Default Admin Created: admin / admin123');
+            console.log('✅ Default Admin Created');
         } else {
             // Update email and ensure it's approved if it exists
             let needsUpdate = false;
