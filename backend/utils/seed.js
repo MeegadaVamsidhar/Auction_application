@@ -2,8 +2,11 @@ const Admin = require('../models/Admin');
 
 const seedAdmin = async () => {
     try {
+        const defaultUsername = process.env.ADMIN_USERNAME || 'admin';
         const defaultMobile = process.env.ADMIN_MOBILE || '0000000000';
-        const existingAdmin = await Admin.findOne({ mobile: defaultMobile });
+        const existingAdmin = await Admin.findOne({
+            $or: [{ mobile: defaultMobile }, { username: defaultUsername }]
+        });
 
         if (!existingAdmin) {
             const admin = new Admin({

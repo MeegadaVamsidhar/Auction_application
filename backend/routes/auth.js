@@ -37,7 +37,7 @@ router.post("/register", async (req, res) => {
       }
     }
 
-    const isApproved = role !== "admin"; // Admins need approval
+    const isApproved = role !== "admin" && role !== "captain"; // Admins and Captains need approval
 
     // Check duplicate mobile/email in BOTH collections
     const [existingAdmin, existingUser] = await Promise.all([

@@ -159,11 +159,39 @@ router.patch("/approve-admin/:id", async (req, res) => {
 router.patch("/teams/:id/status", async (req, res) => {
   try {
     const { status } = req.body;
-    const team = await Team.findByIdAndUpdate(
-      req.params.id,
-      { status },
-      { new: true },
-    );
+    const team = await Team.findById(req.params.id);
+    if (!team) return res.status(404).json({ error: "Team not found" });
+
+    team.status = status;
+    await team.save();
+
+    if (status === "approved" && team.captain) {
+      // 1. Approve the Captain (User)
+      const captain = await User.findByIdAndUpdate(
+        team.captain,
+        { isApproved: true },
+        { new: true },
+      );
+
+      if (captain) {
+        // 2. Link as Player if exists in Player list
+        const playerMatch = await Player.findOne({ mobile: captain.mobile });
+        if (playerMatch) {
+          playerMatch.status = "approved";
+          playerMatch.team = team._id;
+          await playerMatch.save();
+
+          // Add to team players if not already there
+          if (!team.players.includes(playerMatch._id)) {
+            team.players.push(playerMatch._id);
+            // Optionally deduct base price?
+            // team.remainingPurse -= playerMatch.basePrice;
+            await team.save();
+          }
+        }
+      }
+    }
+
     res.json(team);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -220,7 +248,7 @@ router.post("/upload-players", upload.single("file"), async (req, res) => {
             data["Previous teams played for"],
           role: data.Role || data.role,
           dept: data.Dept || data.dept || "N/A",
-          status: "approved", // Automatically approve uploaded players
+          status: "pending", // Now requires admin approval
         };
 
         if (!player.name || !player.mobile) {
@@ -412,21 +440,67 @@ router.post("/settings/player-list-link", async (req, res) => {
 
         const players = [];
         for (const data of playersData) {
+          // Normalize the keys by trimming them to handle trailing spaces
+          const normalizedData = {};
+          Object.keys(data).forEach((key) => {
+            normalizedData[key.trim()] = data[key];
+          });
+
+          const name =
+            normalizedData["FULL NAME"] ||
+            normalizedData["Name"] ||
+            normalizedData["name"] ||
+            normalizedData["Name of the Player"];
+
+          const mobileRaw =
+            normalizedData["Mobile Number"] ||
+            normalizedData["Phone Number"] ||
+            normalizedData["mobile"] ||
+            normalizedData["Mobile"] ||
+            normalizedData["phone number"] ||
+            normalizedData["Contact"] ||
+            normalizedData["WhatsApp Number"];
+
+          const mobile = mobileRaw ? mobileRaw.toString().replace(/\s+/g, "") : null;
+
           const player = {
-            name: data.Name || data.name,
-            mobile: data.Mobile
-              ? data.Mobile.toString()
-              : data.mobile
-                ? data.mobile.toString()
-                : null,
-            year: data.Year || data.year,
-            previousTeams:
-              data.PreviousTeams ||
-              data.previousTeams ||
-              data["Previous teams played for"],
-            role: data.Role || data.role,
-            dept: data.Dept || data.dept || "N/A",
-            status: "approved",
+            name: name ? name.toString().trim() : null,
+            mobile: mobile,
+            year: (
+              normalizedData["YEAR"] ||
+              normalizedData["Year"] ||
+              normalizedData["year"] ||
+              normalizedData["Class"] ||
+              normalizedData["Study Year"] ||
+              "N/A"
+            )
+              .toString()
+              .trim(),
+            previousTeams: (
+              normalizedData["PREVIOUS TEAM ( If any)"] ||
+              normalizedData["Previous teams played for"] ||
+              normalizedData["Previous Experience"] ||
+              "None"
+            )
+              .toString()
+              .trim(),
+            role:
+              normalizedData["ROLE"] ||
+              normalizedData["Role"] ||
+              normalizedData["role"] ||
+              normalizedData["Playing Role"] ||
+              "BATSMAN",
+            dept: (
+              normalizedData["DEPT"] ||
+              normalizedData["Dept"] ||
+              normalizedData["dept"] ||
+              normalizedData["Department"] ||
+              normalizedData["Branch"] ||
+              "N/A"
+            )
+              .toString()
+              .trim(),
+            status: "pending",
           };
 
           if (player.name && player.mobile) {
@@ -435,22 +509,13 @@ router.post("/settings/player-list-link", async (req, res) => {
               ? player.role.toString().toUpperCase().trim()
               : "";
 
-            if (
-              roleUpper.includes("BATSMAN") &&
-              !roleUpper.includes("ALLROUNDER")
-            ) {
+            if (roleUpper.includes("BATSMAN") && !roleUpper.includes("ALLROUNDER")) {
               player.role = "BATSMAN";
-            } else if (roleUpper === "BOWLING" || roleUpper === "BOWLER") {
+            } else if (roleUpper.includes("BOWLING") && !roleUpper.includes("ALLROUNDER")) {
               player.role = "BOWLING";
-            } else if (
-              roleUpper.includes("BOWLING ALLROUNDER") ||
-              roleUpper.includes("BOWLING ALL ROUNDER")
-            ) {
+            } else if (roleUpper.includes("BOWLING") && roleUpper.includes("ALLROUNDER")) {
               player.role = "BOWLING ALLROUNDER";
-            } else if (
-              roleUpper.includes("BATTING ALLROUNDER") ||
-              roleUpper.includes("BATTING ALL ROUNDER")
-            ) {
+            } else if (roleUpper.includes("BATTING") && roleUpper.includes("ALLROUNDER")) {
               player.role = "BATTING ALLROUNDER";
             } else {
               // Fallback
@@ -465,11 +530,35 @@ router.post("/settings/player-list-link", async (req, res) => {
           const stats = { added: 0, updated: 0 };
 
           for (const pData of players) {
+            const { status, ...updateData } = pData;
+
+            // Check if this player is an approved captain
+            const captainUser = await User.findOne({
+              mobile: pData.mobile,
+              role: "captain",
+              isApproved: true,
+            });
+
             const result = await Player.findOneAndUpdate(
               { mobile: pData.mobile },
-              { $set: pData },
+              {
+                $set: updateData,
+                $setOnInsert: {
+                  status: captainUser ? "approved" : "pending",
+                  team: captainUser ? captainUser.team : null,
+                },
+              },
               { upsert: true, new: true, rawResult: true },
             );
+
+            // If it's a captain, make sure they are linked to their team
+            if (captainUser && result.value) {
+              const team = await Team.findById(captainUser.team);
+              if (team && !team.players.includes(result.value._id)) {
+                team.players.push(result.value._id);
+                await team.save();
+              }
+            }
 
             if (result.lastErrorObject.updatedExisting) {
               stats.updated++;
@@ -480,6 +569,14 @@ router.post("/settings/player-list-link", async (req, res) => {
 
           return res.json({
             message: `Sync Complete: Added ${stats.added} new players, Updated ${stats.updated} existing players.`,
+            link: setting.value,
+          });
+        } else {
+          return res.json({
+            message:
+              playersData.length > 0
+                ? "Sheet link saved, but no valid players were identified. Please ensure your sheet has 'Name' and 'Mobile' columns."
+                : "Sheet link saved, but the sheet appears to be empty.",
             link: setting.value,
           });
         }

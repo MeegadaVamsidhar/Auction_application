@@ -26,35 +26,47 @@ const AdminDashboard = () => {
   const socketRef = useRef(null);
 
   const fetchData = async () => {
-    const [playersRes, teamsRes, pendingAdminsRes, allAdminsRes, linkRes] =
-      await Promise.all([
-        axios.get(`${API_URL}/api/admin/players`),
-        axios.get(`${API_URL}/api/admin/teams`),
-        axios.get(`${API_URL}/api/admin/pending-admins`),
-        axios.get(`${API_URL}/api/admin/all-admins`),
-        axios.get(`${API_URL}/api/admin/settings/player-list-link`),
-      ]);
-    setPlayers(playersRes.data);
-    setTeams(teamsRes.data);
-    setPendingAdmins(pendingAdminsRes.data || []);
-    setAllAdmins(allAdminsRes.data || []);
-    if (linkRes.data.link) {
-      setSavedPlayerListLink(linkRes.data.link);
-      setPlayerListLink(linkRes.data.link);
+    try {
+      const [playersRes, teamsRes, pendingAdminsRes, allAdminsRes, linkRes] =
+        await Promise.all([
+          axios.get(`${API_URL}/api/admin/players`),
+          axios.get(`${API_URL}/api/admin/teams`),
+          axios.get(`${API_URL}/api/admin/pending-admins`),
+          axios.get(`${API_URL}/api/admin/all-admins`),
+          axios.get(`${API_URL}/api/admin/settings/player-list-link`),
+        ]);
+      const sortedPlayers = playersRes.data.sort((a, b) => {
+        if (a.status === "pending" && b.status !== "pending") return -1;
+        if (a.status !== "pending" && b.status === "pending") return 1;
+        return 0;
+      });
+      setPlayers(sortedPlayers);
+      setTeams(teamsRes.data);
+      setPendingAdmins(pendingAdminsRes.data || []);
+      setAllAdmins(allAdminsRes.data || []);
+      if (linkRes.data.link) {
+        setSavedPlayerListLink(linkRes.data.link);
+        if (!playerListLink) setPlayerListLink(linkRes.data.link);
+      }
+    } catch (err) {
+      console.error("Error fetching dashboard data:", err);
     }
   };
 
   const savePlayerListLink = async () => {
     try {
+      setUploading(true);
       const res = await axios.post(
         `${API_URL}/api/admin/settings/player-list-link`,
         { link: playerListLink },
       );
       setSavedPlayerListLink(playerListLink);
-      alert(res.data.message || "Link saved successfully!");
-      fetchData();
+      alert(res.data.message || "Operation successful!");
+      await fetchData();
     } catch (err) {
-      alert("Error saving link");
+      alert(err.response?.data?.error || "Error saving link/syncing players");
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -225,8 +237,16 @@ const AdminDashboard = () => {
                   onClick={savePlayerListLink}
                   className="bg-blue-600 text-white text-[10px] font-bold px-3 py-1 rounded hover:bg-blue-500"
                 >
-                  SAVE
+                  {savedPlayerListLink ? "UPDATE" : "SAVE"}
                 </button>
+                {savedPlayerListLink && (
+                  <button
+                    onClick={savePlayerListLink}
+                    className="bg-green-600 text-white text-[10px] font-bold px-3 py-1 rounded hover:bg-green-500"
+                  >
+                    SYNC NOW
+                  </button>
+                )}
               </div>
               {savedPlayerListLink && (
                 <a
@@ -241,106 +261,111 @@ const AdminDashboard = () => {
             </div>
 
             <div className="overflow-y-auto pr-2 space-y-3 flex-1">
-              {players.map((player) => (
-                <div
-                  key={player._id}
-                  className="bg-black/30 p-3 rounded border border-gray-800 hover:border-premium-gold/50 transition-all"
-                >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="font-bold text-sm">{player.name}</p>
-                      <p className="text-[10px] uppercase opacity-50">
-                        {player.role} | {player.dept}
-                      </p>
-                      {player.previousTeams && (
-                        <p className="text-[8px] opacity-40">
-                          Prev: {player.previousTeams}
+              {players.length === 0 ? (
+                <div className="text-center py-10 opacity-30 italic text-xs">
+                  No players found. Sync a sheet or upload an Excel file.
+                </div>
+              ) : (
+                players.map((player) => (
+                  <div
+                    key={player._id}
+                    className="bg-black/30 p-3 rounded border border-gray-800 hover:border-premium-gold/50 transition-all"
+                  >
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="font-bold text-sm">{player.name}</p>
+                        <p className="text-[10px] uppercase opacity-50">
+                          {player.role} | {player.dept}
                         </p>
-                      )}
-                    </div>
-                    <div className="text-right">
-                      <span
-                        className={`text-[10px] px-2 py-0.5 rounded uppercase font-bold ${
-                          player.status === "sold"
+                        {player.previousTeams && (
+                          <p className="text-[8px] opacity-40">
+                            Prev: {player.previousTeams}
+                          </p>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <span
+                          className={`text-[10px] px-2 py-0.5 rounded uppercase font-bold ${player.status === "sold"
                             ? "text-green-500 bg-green-500/10"
                             : player.status === "unsold"
                               ? "text-red-500 bg-red-500/10"
                               : player.status === "approved"
                                 ? "text-premium-gold bg-yellow-500/10"
                                 : "text-gray-500 bg-gray-800"
-                        }`}
-                      >
-                        {player.status}
-                      </span>
+                            }`}
+                        >
+                          {player.status}
+                        </span>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Action Buttons */}
-                  <div className="mt-3 space-y-2">
-                    {player.status !== "sold" && (
-                      <div className="flex gap-2 items-center">
-                        <div className="flex-1 flex items-center bg-black/50 border border-gray-800 rounded px-2">
-                          <span className="text-[10px] opacity-40 mr-1">₹</span>
-                          <input
-                            type="number"
-                            defaultValue={player.basePrice}
-                            onBlur={(e) =>
-                              handleBasePriceUpdate(player._id, e.target.value)
-                            }
-                            className="w-full bg-transparent text-xs py-1 outline-none font-mono"
-                            placeholder="Base"
-                          />
-                          <span className="text-[10px] opacity-40 ml-1">L</span>
+                    {/* Action Buttons */}
+                    <div className="mt-3 space-y-2">
+                      {player.status !== "sold" && (
+                        <div className="flex gap-2 items-center">
+                          <div className="flex-1 flex items-center bg-black/50 border border-gray-800 rounded px-2">
+                            <span className="text-[10px] opacity-40 mr-1">₹</span>
+                            <input
+                              type="number"
+                              defaultValue={player.basePrice}
+                              onBlur={(e) =>
+                                handleBasePriceUpdate(player._id, e.target.value)
+                              }
+                              className="w-full bg-transparent text-xs py-1 outline-none font-mono"
+                              placeholder="Base"
+                            />
+                            <span className="text-[10px] opacity-40 ml-1">L</span>
+                          </div>
                         </div>
+                      )}
+                      <div className="flex gap-2">
+                        {player.status === "pending" && (
+                          <>
+                            <button
+                              onClick={() =>
+                                handlePlayerStatus(player._id, "approved")
+                              }
+                              className="flex-1 bg-green-900/50 hover:bg-green-800 text-[10px] py-1 rounded border border-green-800 relative z-10 text-green-200"
+                            >
+                              Approve
+                            </button>
+                            <button
+                              onClick={() =>
+                                handlePlayerStatus(player._id, "rejected")
+                              }
+                              className="flex-1 bg-red-900/50 hover:bg-red-800 text-[10px] py-1 rounded border border-red-800 relative z-10 text-red-200"
+                            >
+                              Reject
+                            </button>
+                          </>
+                        )}
+                        {(player.status === "approved" ||
+                          player.status === "unsold") &&
+                          !liveAuction && (
+                            <button
+                              onClick={() => startAuction(player)}
+                              className="w-full bg-premium-gold text-black text-xs font-bold py-1.5 rounded hover:bg-yellow-400"
+                            >
+                              START AUCTION
+                            </button>
+                          )}
+                      </div>
+                    </div>
+
+                    {/* Sold Details */}
+                    {player.status === "sold" && (
+                      <div className="mt-2 text-[10px] bg-black/40 p-1.5 rounded flex justify-between">
+                        <span className="opacity-60">
+                          Sold Price:{" "}
+                          <span className="text-white font-mono">
+                            {formatPrice(player.soldPrice)}
+                          </span>
+                        </span>
                       </div>
                     )}
-                    <div className="flex gap-2">
-                      {player.status === "pending" && (
-                        <>
-                          <button
-                            onClick={() =>
-                              handlePlayerStatus(player._id, "approved")
-                            }
-                            className="flex-1 bg-green-900/50 hover:bg-green-800 text-[10px] py-1 rounded border border-green-800 relative z-10 text-green-200"
-                          >
-                            Approve
-                          </button>
-                          <button
-                            onClick={() =>
-                              handlePlayerStatus(player._id, "rejected")
-                            }
-                            className="flex-1 bg-red-900/50 hover:bg-red-800 text-[10px] py-1 rounded border border-red-800 relative z-10 text-red-200"
-                          >
-                            Reject
-                          </button>
-                        </>
-                      )}
-                      {(player.status === "approved" ||
-                        player.status === "unsold") &&
-                        !liveAuction && (
-                          <button
-                            onClick={() => startAuction(player)}
-                            className="w-full bg-premium-gold text-black text-xs font-bold py-1.5 rounded hover:bg-yellow-400"
-                          >
-                            START AUCTION
-                          </button>
-                        )}
-                    </div>
                   </div>
-
-                  {/* Sold Details */}
-                  {player.status === "sold" && (
-                    <div className="mt-2 text-[10px] bg-black/40 p-1.5 rounded flex justify-between">
-                      <span className="opacity-60">
-                        Sold Price:{" "}
-                        <span className="text-white font-mono">
-                          {formatPrice(player.soldPrice)}
-                        </span>
-                      </span>
-                    </div>
-                  )}
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
         </div>
@@ -503,44 +528,44 @@ const AdminDashboard = () => {
               {teams.some(
                 (team) => !team.status || team.status === "pending",
               ) && (
-                <div className="mb-6">
-                  <h3 className="text-[10px] font-black text-yellow-500 uppercase tracking-widest mb-2 flex items-center gap-2">
-                    <span className="w-2 h-2 bg-yellow-500 rounded-full animate-ping"></span>
-                    Pending Approval
-                  </h3>
-                  <div className="space-y-2">
-                    {teams
-                      .filter((t) => !t.status || t.status === "pending")
-                      .map((team) => (
-                        <div
-                          key={team._id}
-                          className="bg-yellow-500/5 border border-yellow-500/30 p-3 rounded-lg"
-                        >
-                          <p className="font-bold text-sm mb-2">{team.name}</p>
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() =>
-                                handleTeamStatus(team._id, "approved")
-                              }
-                              className="flex-1 bg-yellow-500 text-black text-[10px] py-1 rounded font-bold hover:bg-yellow-400"
-                            >
-                              Approve
-                            </button>
-                            <button
-                              onClick={() =>
-                                handleTeamStatus(team._id, "rejected")
-                              }
-                              className="flex-1 bg-red-900/50 text-red-200 text-[10px] py-1 rounded border border-red-800"
-                            >
-                              Reject
-                            </button>
+                  <div className="mb-6">
+                    <h3 className="text-[10px] font-black text-yellow-500 uppercase tracking-widest mb-2 flex items-center gap-2">
+                      <span className="w-2 h-2 bg-yellow-500 rounded-full animate-ping"></span>
+                      Pending Approval
+                    </h3>
+                    <div className="space-y-2">
+                      {teams
+                        .filter((t) => !t.status || t.status === "pending")
+                        .map((team) => (
+                          <div
+                            key={team._id}
+                            className="bg-yellow-500/5 border border-yellow-500/30 p-3 rounded-lg"
+                          >
+                            <p className="font-bold text-sm mb-2">{team.name}</p>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() =>
+                                  handleTeamStatus(team._id, "approved")
+                                }
+                                className="flex-1 bg-yellow-500 text-black text-[10px] py-1 rounded font-bold hover:bg-yellow-400"
+                              >
+                                Approve
+                              </button>
+                              <button
+                                onClick={() =>
+                                  handleTeamStatus(team._id, "rejected")
+                                }
+                                className="flex-1 bg-red-900/50 text-red-200 text-[10px] py-1 rounded border border-red-800"
+                              >
+                                Reject
+                              </button>
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                    </div>
+                    <div className="my-4 border-b border-gray-800"></div>
                   </div>
-                  <div className="my-4 border-b border-gray-800"></div>
-                </div>
-              )}
+                )}
 
               {/* Active Teams Section */}
               {teams
