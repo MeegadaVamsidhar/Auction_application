@@ -38,10 +38,12 @@ auction/
 ## ⚙️ Setup Instructions
 
 ### 1. Prerequisites
+
 - Node.js installed.
 - MongoDB Atlas account.
 
 ### 2. Backend Setup
+
 1. Navigate to directory: `cd backend`
 2. Install dependencies: `npm install`
 3. Create a `.env` file (see `.env.example`):
@@ -54,6 +56,7 @@ auction/
 4. Start server: `npm run dev`
 
 ### 3. Frontend Setup
+
 1. Navigate to directory: `cd frontend`
 2. Install dependencies: `npm install`
 3. Create a `.env` file:
@@ -63,7 +66,9 @@ auction/
 4. Start development server: `npm run dev`
 
 ## 🛡️ Security Note
+
 All sensitive environment variables are hidden using `.gitignore`. Use the provided `.env.example` files as templates for deployment.
 
 ## 📄 License
+
 MIT
