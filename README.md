@@ -51,9 +51,7 @@ auction/
    EMAIL_USER=your_email
    EMAIL_PASS=your_app_password
    ```
-4. Seed the admin user: `node seed.js`
-   - **Default Admin:** `admin` / `admin123` (Mobile: `0000000000`)
-5. Start server: `npm run dev`
+4. Start server: `npm run dev`
 
 ### 3. Frontend Setup
 1. Navigate to directory: `cd frontend`
