@@ -11,13 +11,17 @@ router.get("/", async (req, res) => {
       status: { $in: ["unsold", "pending"] },
     }); // Include pending as potentially unsold
 
-    const teams = await Team.find({ status: "approved" }).select(
-      "name players",
-    );
+    const teams = await Team.find({ status: "approved" })
+      .select("name players remainingPurse initialPurse")
+      .populate("players");
+
     const teamStats = teams.map((team) => ({
       id: team._id,
       name: team.name,
+      remainingPurse: team.remainingPurse,
+      initialPurse: team.initialPurse,
       playerCount: team.players.length,
+      players: team.players, // Include populated players
     }));
 
     res.json({

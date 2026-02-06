@@ -28,17 +28,12 @@ const Landing = () => {
   });
 
   const [selectedTeam, setSelectedTeam] = useState(null);
-  const [allTeams, setAllTeams] = useState([]);
 
   useEffect(() => {
     const fetchEverything = async () => {
       try {
-        const [statsRes, teamsRes] = await Promise.all([
-          axios.get(`${API_URL}/api/stats`),
-          axios.get(`${API_URL}/api/admin/teams`)
-        ]);
+        const statsRes = await axios.get(`${API_URL}/api/stats`);
         setStats(statsRes.data);
-        setAllTeams(teamsRes.data.filter(t => t.status === "approved"));
       } catch (err) {
         console.error("Error fetching data:", err);
       }
@@ -56,7 +51,7 @@ const Landing = () => {
     };
   }, []);
 
-  const selectedTeamData = allTeams.find(t => t.name === selectedTeam);
+  const selectedTeamData = stats.teamStats.find(t => t.name === selectedTeam);
 
   const containerVariants = {
     hidden: { opacity: 0 },
