@@ -15,6 +15,7 @@ router.get("/", async (req, res) => {
       "name players",
     );
     const teamStats = teams.map((team) => ({
+      id: team._id,
       name: team.name,
       playerCount: team.players.length,
     }));

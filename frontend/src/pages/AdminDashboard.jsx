@@ -1,7 +1,37 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import io from "socket.io-client";
+import {
+  Shield,
+  Users,
+  Activity,
+  TrendingUp,
+  Settings,
+  Search,
+  Upload,
+  CheckCircle,
+  XCircle,
+  ExternalLink,
+  Zap,
+  ArrowRight,
+  User as UserIcon,
+  LogOut,
+  Layout,
+  Clock,
+  ChevronRight,
+  AlertCircle,
+  FileText,
+  Target,
+  BarChart3,
+  Trophy,
+  Cpu,
+  Fingerprint,
+  Radio,
+  Wifi,
+  Database
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 import API_URL from "../config";
 
@@ -11,6 +41,8 @@ const AdminDashboard = () => {
   const [pendingAdmins, setPendingAdmins] = useState([]);
   const [allAdmins, setAllAdmins] = useState([]);
   const [liveAuction, setLiveAuction] = useState(null);
+  const [activeTab, setActiveTab] = useState("control");
+  const navigate = useNavigate();
 
   const formatPrice = (value) => {
     if (!value && value !== 0) return "₹0 L";
@@ -19,6 +51,7 @@ const AdminDashboard = () => {
     }
     return `₹${value} L`;
   };
+
   const [uploading, setUploading] = useState(false);
   const [playerListLink, setPlayerListLink] = useState("");
   const [savedPlayerListLink, setSavedPlayerListLink] = useState("");
@@ -79,7 +112,7 @@ const AdminDashboard = () => {
     });
 
     socketRef.current.on("playerSold", () => {
-      fetchData(); // Refresh lists
+      fetchData();
     });
 
     socketRef.current.on("playerUnsold", () => {
@@ -97,17 +130,6 @@ const AdminDashboard = () => {
   const handleTeamStatus = async (id, status) => {
     await axios.patch(`${API_URL}/api/admin/teams/${id}/status`, { status });
     fetchData();
-  };
-
-  const handleBasePriceUpdate = async (id, basePrice) => {
-    try {
-      await axios.patch(`${API_URL}/api/admin/players/${id}/base-price`, {
-        basePrice,
-      });
-      fetchData();
-    } catch (err) {
-      alert("Error updating base price");
-    }
   };
 
   const startAuction = (player) => {
@@ -163,479 +185,517 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleLogout = () => {
+    if (confirm("Terminate admin session and exit command center?")) {
+      localStorage.clear();
+      navigate("/admin-login");
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-premium-dark p-8 text-white">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-premium-gold italic uppercase tracking-widest">
-          Control Center
-        </h1>
-        <div className="space-x-4">
-          <Link
-            to="/admin/players"
-            className="text-sm font-bold text-white hover:text-premium-gold uppercase tracking-wider border border-white/20 px-4 py-2 rounded hover:border-premium-gold/50 transition-all"
-          >
-            Manage Players
-          </Link>
-          <Link
-            to="/admin/teams"
-            className="text-sm font-bold text-white hover:text-premium-gold uppercase tracking-wider border border-white/20 px-4 py-2 rounded hover:border-premium-gold/50 transition-all"
-          >
-            Manage Teams
-          </Link>
-        </div>
+    <div className="min-h-screen bg-premium-dark text-white font-sans selection:bg-premium-gold/30 flex">
+      {/* Cinematic Background Grid */}
+      <div className="fixed inset-0 z-0 pointer-events-none opacity-40">
+        <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(59, 130, 246, 0.05) 1px, transparent 0)', backgroundSize: '60px 60px' }}></div>
+        <div className="absolute top-0 right-0 w-[1000px] h-[1000px] bg-blue-500/[0.03] rounded-full blur-[200px] animate-pulse-slow"></div>
+        <div className="absolute bottom-0 left-0 w-[800px] h-[800px] bg-premium-gold/[0.02] rounded-full blur-[150px] animate-pulse-slow"></div>
+        {/* Procedural Data Line Overlay */}
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-[0.03]"></div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
-        {/* LEFT: Player Pool (4 cols) */}
-        <div className="md:col-span-4 space-y-4">
-          {/* ... Existing Left Content ... */}
-          <div className="premium-card p-4 h-[80vh] flex flex-col">
-            <div className="flex justify-between items-center mb-4 border-b border-gray-800 pb-2">
-              <h2 className="text-xl font-bold">PLAYER POOL</h2>
+      <div className="relative z-10 w-full flex flex-col">
+        {/* Global Operations Header */}
+        <header className="px-10 py-6 flex flex-col lg:flex-row justify-between items-center gap-8 border-b border-white/5 bg-white/[0.01] backdrop-blur-3xl sticky top-0 z-50">
+          <div className="flex items-center gap-8">
+            <div className="w-16 h-16 bg-blue-600/10 border border-blue-500/20 rounded-2xl flex items-center justify-center shadow-2xl relative group overflow-hidden">
+              <Shield className="text-blue-400" size={32} />
+              <div className="absolute inset-x-0 bottom-0 h-1 bg-blue-400/50 animate-scan"></div>
+              <div className="absolute inset-0 bg-blue-400/10 blur-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
             </div>
-
-            {/* Excel Upload Section */}
-            <div className="mb-4 p-3 bg-premium-gold/5 border border-premium-gold/20 rounded-lg">
-              <p className="text-[10px] font-bold text-premium-gold uppercase mb-2">
-                Bulk Player Upload (Excel)
-              </p>
-              <div className="flex gap-2">
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileUpload}
-                  accept=".xlsx, .xls"
-                  className="hidden"
-                />
-                <button
-                  onClick={() => fileInputRef.current.click()}
-                  disabled={uploading}
-                  className="flex-1 bg-premium-gold text-black text-[10px] font-bold py-2 rounded hover:bg-yellow-400 disabled:opacity-50"
-                >
-                  {uploading ? "UPLOADING..." : "CHOOSE EXCEL FILE"}
-                </button>
-              </div>
-              <p className="text-[8px] opacity-40 mt-1 italic font-mono">
-                Columns: Name, Mobile, Year, PreviousTeams, Role, Dept
-              </p>
-            </div>
-
-            {/* Player Source Link Section */}
-            <div className="mb-4 p-3 bg-blue-500/5 border border-blue-500/20 rounded-lg">
-              <p className="text-[10px] font-bold text-blue-400 uppercase mb-2">
-                Reference Player List (Google Sheet)
-              </p>
-              <div className="flex gap-2 mb-2">
-                <input
-                  type="text"
-                  value={playerListLink}
-                  onChange={(e) => setPlayerListLink(e.target.value)}
-                  placeholder="Paste URL here..."
-                  className="flex-1 bg-black/50 border border-blue-500/30 rounded px-2 py-1 text-[10px] text-white focus:border-blue-500 outline-none"
-                />
-                <button
-                  onClick={savePlayerListLink}
-                  className="bg-blue-600 text-white text-[10px] font-bold px-3 py-1 rounded hover:bg-blue-500"
-                >
-                  {savedPlayerListLink ? "UPDATE" : "SAVE"}
-                </button>
-                {savedPlayerListLink && (
-                  <button
-                    onClick={savePlayerListLink}
-                    className="bg-green-600 text-white text-[10px] font-bold px-3 py-1 rounded hover:bg-green-500"
-                  >
-                    SYNC NOW
-                  </button>
-                )}
-              </div>
-              {savedPlayerListLink && (
-                <a
-                  href={savedPlayerListLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block text-center bg-blue-500/10 text-blue-300 text-[10px] py-1.5 rounded border border-blue-500/30 hover:bg-blue-500/20 truncate px-2"
-                >
-                  OPEN REFERENCE SHEET ↗
-                </a>
-              )}
-            </div>
-
-            <div className="overflow-y-auto pr-2 space-y-3 flex-1">
-              {players.length === 0 ? (
-                <div className="text-center py-10 opacity-30 italic text-xs">
-                  No players found. Sync a sheet or upload an Excel file.
+            <div>
+              <h1 className="text-3xl font-black italic tracking-tighter text-white uppercase leading-none">
+                CENTRAL <span className="text-blue-400 shimmer-text">COMMAND</span>
+              </h1>
+              <div className="flex items-center gap-4 mt-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.8)] animate-pulse"></div>
+                  <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest italic">Operations Matrix Online</span>
                 </div>
-              ) : (
-                players.map((player) => (
-                  <div
-                    key={player._id}
-                    className="bg-black/30 p-3 rounded border border-gray-800 hover:border-premium-gold/50 transition-all"
-                  >
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <p className="font-bold text-sm">{player.name}</p>
-                        <p className="text-[10px] uppercase opacity-50">
-                          {player.role} | {player.dept}
-                        </p>
-                        {player.previousTeams && (
-                          <p className="text-[8px] opacity-40">
-                            Prev: {player.previousTeams}
-                          </p>
-                        )}
-                      </div>
-                      <div className="text-right">
-                        <span
-                          className={`text-[10px] px-2 py-0.5 rounded uppercase font-bold ${player.status === "sold"
-                            ? "text-green-500 bg-green-500/10"
-                            : player.status === "unsold"
-                              ? "text-red-500 bg-red-500/10"
-                              : player.status === "approved"
-                                ? "text-premium-gold bg-yellow-500/10"
-                                : "text-gray-500 bg-gray-800"
-                            }`}
-                        >
-                          {player.status}
-                        </span>
-                      </div>
-                    </div>
+                <div className="w-px h-3 bg-white/10"></div>
+                <span className="text-[9px] font-black text-blue-500/60 uppercase tracking-widest">v.4.12.0_TACTICAL</span>
+              </div>
+            </div>
+          </div>
 
-                    {/* Action Buttons */}
-                    <div className="mt-3 space-y-2">
-                      {player.status !== "sold" && (
-                        <div className="flex gap-2 items-center">
-                          <div className="flex-1 flex items-center bg-black/50 border border-gray-800 rounded px-2">
-                            <span className="text-[10px] opacity-40 mr-1">₹</span>
-                            <input
-                              type="number"
-                              defaultValue={player.basePrice}
-                              onBlur={(e) =>
-                                handleBasePriceUpdate(player._id, e.target.value)
-                              }
-                              className="w-full bg-transparent text-xs py-1 outline-none font-mono"
-                              placeholder="Base"
-                            />
-                            <span className="text-[10px] opacity-40 ml-1">L</span>
+          <div className="flex items-center gap-6">
+            <nav className="flex items-center gap-2 bg-black/40 p-2 rounded-2xl border border-white/5 backdrop-blur-md">
+              <div className="flex px-1">
+                {[
+                  { id: "control", label: "OPERATIONS", icon: Cpu },
+                  { id: "history", label: "ARCHIVES", icon: Database }
+                ].map(tab => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all flex items-center gap-3 ${activeTab === tab.id ? 'bg-blue-600 text-white shadow-[0_0_30px_rgba(37,99,235,0.3)] border border-blue-400/30' : 'text-gray-500 hover:text-white hover:bg-white/5'}`}
+                  >
+                    <tab.icon size={14} />
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+              <div className="w-px h-8 bg-white/5 mx-2"></div>
+              <div className="flex items-center gap-3 pr-2">
+                <Link to="/admin/players" className="w-10 h-10 flex items-center justify-center text-gray-600 hover:text-blue-400 hover:bg-blue-400/10 rounded-xl transition-all border border-transparent hover:border-blue-400/20 group" title="Player Archive">
+                  <Fingerprint size={20} className="group-hover:scale-110 transition-transform" />
+                </Link>
+                <Link to="/admin/teams" className="w-10 h-10 flex items-center justify-center text-gray-600 hover:text-premium-gold hover:bg-premium-gold/10 rounded-xl transition-all border border-transparent hover:border-premium-gold/20 group" title="Franchise Registry">
+                  <Shield size={20} className="group-hover:scale-110 transition-transform" />
+                </Link>
+                <button onClick={handleLogout} className="w-10 h-10 flex items-center justify-center text-red-500/40 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all border border-transparent hover:border-red-500/20 group">
+                  <LogOut size={20} className="group-hover:scale-110 transition-transform" />
+                </button>
+              </div>
+            </nav>
+          </div>
+        </header>
+
+        <main className="p-10 lg:p-14 space-y-12 flex-1 scroll-smooth">
+          {/* Tactical Telemetry Ribbon */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            {[
+              { label: "POOL_CAPACITY", icon: Users, val: players.length, sub: "UNIT_RECORDS", color: "blue", trend: "+12%" },
+              { label: "FRANCHISES", icon: Trophy, val: teams.filter(t => t.status === "approved").length, sub: "AUTH_UNITS", color: "gold", trend: "NOMINAL" },
+              { label: "SECURE_PEERS", icon: Shield, val: allAdmins.length, sub: "TIER_1_AUTH", color: "purple", trend: "SYNCED" },
+              { label: "AUCTION_GRID", icon: Activity, val: liveAuction ? "LIVE" : "IDLE", sub: liveAuction ? "OPS_ACTIVE" : "OPS_STANDBY", color: liveAuction ? "green" : "gray", trend: liveAuction ? "BUSY" : "READY" }
+            ].map((stat, i) => (
+              <motion.div
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1, duration: 0.5 }}
+                key={i}
+                className="glass-panel p-8 relative overflow-hidden group hover:bg-white/[0.02] border-white/5 hover:border-blue-500/20 transition-all shadow-2xl"
+              >
+                <div className="relative z-10 flex justify-between items-start">
+                  <div>
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className={`w-2 h-2 rounded-full ${stat.val === 'IDLE' ? 'bg-gray-600' : 'bg-blue-500 animate-pulse'}`}></div>
+                      <p className="text-[10px] font-black text-gray-700 uppercase tracking-[0.3em] font-mono italic">{stat.label}</p>
+                    </div>
+                    <h3 className={`text-4xl font-black italic tabular-nums text-white tracking-tighter ${stat.val === 'LIVE' ? 'text-green-500 shimmer-text' : ''}`}>{stat.val}</h3>
+                    <div className="flex items-center gap-3 mt-3">
+                      <p className="text-[9px] font-black text-gray-800 uppercase tracking-widest italic">{stat.sub}</p>
+                      <span className="text-[8px] font-black text-blue-500/40 font-mono tracking-tighter">[{stat.trend}]</span>
+                    </div>
+                  </div>
+                  <stat.icon className={`text-blue-500/20 group-hover:text-blue-500/40 transition-all group-hover:scale-110`} size={40} />
+                </div>
+                {/* Micro-HUD Accentuations */}
+                <div className="absolute top-0 right-0 w-20 h-20 bg-blue-500/[0.02] blur-2xl group-hover:bg-blue-500/[0.05] transition-all"></div>
+              </motion.div>
+            ))}
+          </div>
+
+          <div className="grid lg:grid-cols-12 gap-10 items-start">
+            {/* LEFT: Dossier Operations Queue */}
+            <aside className="lg:col-span-3 space-y-6">
+              <div className="flex items-center justify-between px-2">
+                <div className="flex items-center gap-3">
+                  <Radio size={16} className="text-blue-400" />
+                  <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-500 italic">UNIT_QUEUE</h2>
+                </div>
+                <span className="text-[9px] font-black text-gray-800 uppercase tracking-widest">{players.length} RECS</span>
+              </div>
+
+              <div className="glass-panel flex flex-col h-[780px] overflow-hidden border-white/5 bg-black/40 relative">
+                <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/80 to-transparent pointer-events-none z-10"></div>
+
+                <div className="p-8 border-b border-white/5 space-y-8 bg-white/[0.01]">
+                  <div className="space-y-4">
+                    <p className="text-[9px] font-black uppercase tracking-[0.3em] text-blue-400 italic flex items-center gap-3">
+                      <Upload size={12} /> BATCH_INGESTION
+                    </p>
+                    <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept=".xlsx, .xls" className="hidden" />
+                    <button
+                      onClick={() => fileInputRef.current.click()}
+                      disabled={uploading}
+                      className="w-full bg-blue-600 text-white hover:bg-blue-500 py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] shadow-[0_0_20px_rgba(37,99,235,0.2)] border border-blue-400/30 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                    >
+                      {uploading ? "INDEXING_DATA..." : "UPLOAD_XLS_PROTO"}
+                    </button>
+                  </div>
+
+                  <div className="space-y-4 pt-6 border-t border-white/10">
+                    <div className="flex justify-between items-center">
+                      <p className="text-[9px] font-black uppercase tracking-[0.3em] text-gray-700 italic">CLOUD_CLOUD_SYNC</p>
+                      <Wifi size={10} className="text-gray-800" />
+                    </div>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={playerListLink}
+                        onChange={(e) => setPlayerListLink(e.target.value)}
+                        placeholder="SHEET_TOKEN..."
+                        className="flex-1 bg-black/60 border border-white/10 rounded-xl px-5 py-3 text-[10px] outline-none focus:border-blue-500/40 focus:ring-4 focus:ring-blue-500/5 transition-all font-mono text-blue-400 tracking-tighter"
+                      />
+                      <button onClick={savePlayerListLink} className="p-3 bg-white/[0.03] text-gray-500 hover:text-blue-400 rounded-xl border border-white/5 hover:border-blue-400/30 transition-all hover:bg-blue-400/5 group">
+                        <Activity size={18} className="group-hover:animate-pulse" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-6 space-y-5 custom-scrollbar bg-black/20">
+                  {players.map((player, idx) => (
+                    <motion.div
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.1 + (idx * 0.03) }}
+                      key={player._id}
+                      className="p-6 bg-white/[0.01] border border-white/5 rounded-2xl group hover:border-blue-500/20 transition-all hover:bg-white/[0.03] relative overflow-hidden"
+                    >
+                      <div className="flex justify-between items-start mb-4">
+                        <div>
+                          <h4 className="text-sm font-black italic uppercase tracking-tight truncate max-w-[150px] text-white group-hover:text-blue-400 transition-colors leading-none">{player.name}</h4>
+                          <div className="flex items-center gap-2 mt-2">
+                            <span className="text-[8px] font-black text-gray-700 uppercase tracking-widest">{player.role}</span>
+                            <div className="w-[3px] h-[3px] rounded-full bg-gray-800"></div>
+                            <span className="text-[8px] font-black text-gray-700 uppercase tracking-widest">{player.dept}</span>
                           </div>
                         </div>
-                      )}
+                        <span className={`text-[8px] px-3 py-1 rounded-xl font-black uppercase tracking-widest italic border ${player.status === 'sold' ? 'bg-green-500/10 text-green-500 border-green-500/20' :
+                          player.status === 'pending' ? 'bg-blue-500/10 text-blue-500 border-blue-500/20 animate-pulse' :
+                            'bg-white/5 text-gray-600 border-white/10'
+                          }`}>{player.status}</span>
+                      </div>
+
                       <div className="flex gap-2">
-                        {player.status === "pending" && (
+                        {player.status === 'pending' ? (
                           <>
-                            <button
-                              onClick={() =>
-                                handlePlayerStatus(player._id, "approved")
-                              }
-                              className="flex-1 bg-green-900/50 hover:bg-green-800 text-[10px] py-1 rounded border border-green-800 relative z-10 text-green-200"
-                            >
-                              Approve
-                            </button>
-                            <button
-                              onClick={() =>
-                                handlePlayerStatus(player._id, "rejected")
-                              }
-                              className="flex-1 bg-red-900/50 hover:bg-red-800 text-[10px] py-1 rounded border border-red-800 relative z-10 text-red-200"
-                            >
-                              Reject
-                            </button>
+                            <button onClick={() => handlePlayerStatus(player._id, 'approved')} className="flex-1 bg-blue-500/10 text-blue-500 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest border border-blue-500/20 hover:bg-blue-500 hover:text-white transition-all italic">ENROLL</button>
+                            <button onClick={() => handlePlayerStatus(player._id, 'rejected')} className="flex-1 bg-red-500/10 text-red-500 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest border border-red-500/20 hover:bg-red-500 hover:text-white transition-all italic">VOID</button>
                           </>
-                        )}
-                        {(player.status === "approved" ||
-                          player.status === "unsold") &&
-                          !liveAuction && (
+                        ) : (
+                          player.status !== 'sold' && !liveAuction && (
                             <button
                               onClick={() => startAuction(player)}
-                              className="w-full bg-premium-gold text-black text-xs font-bold py-1.5 rounded hover:bg-yellow-400"
+                              className="w-full bg-white/[0.03] text-white hover:bg-blue-600 hover:text-white py-3 rounded-xl text-[10px] font-black tracking-[0.3em] border border-white/10 transition-all group/btn uppercase italic flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(0,0,0,0.3)]"
                             >
-                              START AUCTION
+                              DEPLOY_TO_ARENA
+                              <ArrowRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />
                             </button>
-                          )}
+                          )
+                        )}
                       </div>
-                    </div>
-
-                    {/* Sold Details */}
-                    {player.status === "sold" && (
-                      <div className="mt-2 text-[10px] bg-black/40 p-1.5 rounded flex justify-between">
-                        <span className="opacity-60">
-                          Sold Price:{" "}
-                          <span className="text-white font-mono">
-                            {formatPrice(player.soldPrice)}
-                          </span>
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* MIDDLE: Live Auction Control (4 cols) */}
-        <div className="md:col-span-4">
-          <div className="premium-card p-6 h-[80vh] flex flex-col relative">
-            <h2 className="text-xl font-bold mb-6 text-center border-b border-gray-800 pb-4">
-              LIVE AUCTION
-            </h2>
-
-            {liveAuction ? (
-              <div className="flex-1 flex flex-col">
-                <div className="text-center mb-8">
-                  <div className="w-24 h-24 bg-gray-800 rounded-full mx-auto mb-4 border-2 border-premium-gold flex items-center justify-center">
-                    <span className="text-3xl font-black">
-                      {liveAuction.currentPlayer?.name?.charAt(0)}
-                    </span>
-                  </div>
-                  <h3 className="text-2xl font-black italic">
-                    {liveAuction.currentPlayer?.name}
-                  </h3>
-                  <p className="text-sm opacity-50">
-                    {liveAuction.currentPlayer?.role} | Base: ₹
-                    {liveAuction.currentPlayer?.basePrice}L
-                  </p>
-                  {liveAuction.currentPlayer?.previousTeams && (
-                    <p className="text-xs text-premium-gold mt-1">
-                      Prev: {liveAuction.currentPlayer.previousTeams}
-                    </p>
-                  )}
-                </div>
-
-                <div className="bg-black/40 p-4 rounded-xl border border-gray-700 text-center mb-6">
-                  <p className="text-xs opacity-50 uppercase mb-1">
-                    Current Highest Bid
-                  </p>
-                  <p className="text-4xl font-mono font-black text-white mb-2">
-                    {formatPrice(liveAuction.highestBid)}
-                  </p>
-                  <p className="text-premium-gold font-bold text-sm">
-                    {liveAuction.highestBidderName
-                      ? `Held by: ${liveAuction.highestBidderName}`
-                      : "Waiting for bids..."}
-                  </p>
-                  <div className="mt-4 text-[10px] flex justify-between items-center opacity-50 font-mono">
-                    <span>
-                      Next Inc: {formatPrice(liveAuction.bidIncreaseAmount)}
-                    </span>
-                    <span>Timer: {liveAuction.timer}s</span>
-                  </div>
-                </div>
-
-                {/* Bid Log */}
-                <div className="flex-1 overflow-y-auto bg-black/20 rounded p-2 mb-4 text-xs font-mono space-y-1">
-                  {liveAuction.bidHistory?.map((log, i) => (
-                    <div key={i} className="flex justify-between text-gray-400">
-                      <span>{log.teamName}</span>
-                      <span className="text-white">₹{log.amount}L</span>
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
+              </div>
+            </aside>
 
-                {/* Admin Controls */}
-                <div className="grid grid-cols-2 gap-4 mt-auto">
-                  <button
-                    onClick={sellPlayer}
-                    disabled={!liveAuction.highestBidder}
-                    className="bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+            {/* CENTER: Main Tactical Operations Console */}
+            <section className="lg:col-span-9 space-y-10">
+              <AnimatePresence mode="wait">
+                {liveAuction ? (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.99, y: 10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.99, y: -10 }}
+                    className="grid lg:grid-cols-2 gap-10"
                   >
-                    SOLD
-                  </button>
-                  <button
-                    onClick={markUnsold}
-                    className="bg-red-600 hover:bg-red-500 text-white font-bold py-3 rounded"
-                  >
-                    UNSOLD
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="flex-1 flex flex-col items-center justify-center opacity-30 text-center">
-                <div className="text-4xl mb-4">🔲</div>
-                <p>
-                  Select an 'Approved' player from the pool to start the
-                  auction.
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* RIGHT: Team Overview (4 cols) */}
-        <div className="md:col-span-4">
-          <div className="premium-card p-4 h-[80vh] flex flex-col">
-            <h2 className="text-xl font-bold mb-4">TEAMS & ADMINS</h2>
-            <div className="overflow-y-auto space-y-4 flex-1 pr-2">
-              {/* PENDING ADMINS */}
-              {pendingAdmins.length > 0 && (
-                <div className="mb-6">
-                  <h3 className="text-[10px] font-black text-red-500 uppercase tracking-widest mb-2 flex items-center gap-2">
-                    <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-                    Pending Admin Approvals
-                  </h3>
-                  <div className="space-y-2">
-                    {pendingAdmins.map((admin) => (
-                      <div
-                        key={admin._id}
-                        className="bg-red-500/5 border border-red-500/30 p-3 rounded-lg flex justify-between items-center"
-                      >
-                        <div>
-                          <p className="font-bold text-sm">{admin.username}</p>
-                          <p className="text-[10px] opacity-60">
-                            {admin.email}
-                          </p>
+                    {/* Active Unit Telemetry Panel */}
+                    <div className="glass-panel p-10 border-blue-500/20 bg-blue-500/[0.01] relative overflow-hidden shadow-[0_0_80px_rgba(59,130,246,0.05)]">
+                      <div className="absolute top-0 right-0 p-8">
+                        <div className="flex items-center gap-4 bg-blue-600 px-6 py-2.5 rounded-2xl shadow-[0_0_30px_rgba(37,99,235,0.4)] border border-blue-400/30">
+                          <div className="w-2.5 h-2.5 bg-white rounded-full animate-ping"></div>
+                          <span className="text-[10px] font-black text-white uppercase tracking-[0.4em] italic">OPS_PRIMARY_FOCUS</span>
                         </div>
-                        <button
-                          onClick={() => handleAdminApproval(admin._id)}
-                          className="bg-red-500 text-white text-[10px] py-1 px-3 rounded font-bold hover:bg-red-600"
-                        >
-                          Approve
-                        </button>
                       </div>
-                    ))}
-                  </div>
-                  <div className="my-4 border-b border-gray-800"></div>
-                </div>
-              )}
 
-              {/* APPROVED ADMINS */}
-              <div className="mb-6">
-                <h3 className="text-[10px] font-black text-green-500 uppercase tracking-widest mb-2 flex items-center gap-2">
-                  <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                  System Admins
-                </h3>
-                <div className="space-y-2">
-                  {allAdmins
-                    .filter((a) => a.isApproved)
-                    .map((admin) => (
-                      <div
-                        key={admin._id}
-                        className="bg-green-500/5 border border-green-500/30 p-2 rounded flex justify-between items-center"
-                      >
-                        <div>
-                          <p className="font-bold text-xs">{admin.username}</p>
-                          <p className="text-[10px] opacity-60">
-                            {admin.mobile}
-                          </p>
-                        </div>
-                        <span className="text-[8px] bg-green-500/20 text-green-400 px-2 py-0.5 rounded font-bold uppercase">
-                          Active
-                        </span>
-                      </div>
-                    ))}
-                </div>
-                <div className="my-4 border-b border-gray-800"></div>
-              </div>
-
-              {/* Pending Teams Section */}
-              {teams.some(
-                (team) => !team.status || team.status === "pending",
-              ) && (
-                  <div className="mb-6">
-                    <h3 className="text-[10px] font-black text-yellow-500 uppercase tracking-widest mb-2 flex items-center gap-2">
-                      <span className="w-2 h-2 bg-yellow-500 rounded-full animate-ping"></span>
-                      Pending Approval
-                    </h3>
-                    <div className="space-y-2">
-                      {teams
-                        .filter((t) => !t.status || t.status === "pending")
-                        .map((team) => (
-                          <div
-                            key={team._id}
-                            className="bg-yellow-500/5 border border-yellow-500/30 p-3 rounded-lg"
-                          >
-                            <p className="font-bold text-sm mb-2">{team.name}</p>
-                            <div className="flex gap-2">
-                              <button
-                                onClick={() =>
-                                  handleTeamStatus(team._id, "approved")
-                                }
-                                className="flex-1 bg-yellow-500 text-black text-[10px] py-1 rounded font-bold hover:bg-yellow-400"
-                              >
-                                Approve
-                              </button>
-                              <button
-                                onClick={() =>
-                                  handleTeamStatus(team._id, "rejected")
-                                }
-                                className="flex-1 bg-red-900/50 text-red-200 text-[10px] py-1 rounded border border-red-800"
-                              >
-                                Reject
-                              </button>
+                      <div className="space-y-12">
+                        <div className="flex items-center gap-10">
+                          <div className="relative group">
+                            <div className="absolute -inset-4 border border-blue-500/10 rounded-full animate-spin-slow"></div>
+                            <div className="w-32 h-32 rounded-3xl bg-white/[0.03] border border-white/10 flex items-center justify-center shadow-2xl overflow-hidden relative">
+                              <span className="text-6xl font-black italic text-blue-400 group-hover:scale-110 transition-transform duration-700">
+                                {liveAuction.currentPlayer?.name.charAt(0)}
+                              </span>
+                              <div className="absolute inset-x-0 bottom-0 h-1 bg-blue-400/40 animate-scan"></div>
                             </div>
                           </div>
-                        ))}
-                    </div>
-                    <div className="my-4 border-b border-gray-800"></div>
-                  </div>
-                )}
-
-              {/* Active Teams Section */}
-              {teams
-                .filter(
-                  (t) => t.status === "approved" || t.status === "rejected",
-                )
-                .map((team) => (
-                  <div
-                    key={team._id}
-                    className="bg-black/30 p-3 rounded border border-gray-800"
-                  >
-                    <div className="flex justify-between items-center mb-2">
-                      <div className="flex flex-col">
-                        <span className="font-bold">{team.name}</span>
-                        <span
-                          className={`text-[9px] uppercase font-bold ${team.status === "approved" ? "text-green-500" : team.status === "rejected" ? "text-red-500" : "text-yellow-500"}`}
-                        >
-                          {team.status}
-                        </span>
-                      </div>
-                      {team.status === "approved" && (
-                        <span className="text-premium-gold font-mono text-sm">
-                          Rem: {formatPrice(team.remainingPurse)}
-                        </span>
-                      )}
-                    </div>
-
-                    {team.status === "approved" && (
-                      <>
-                        <div className="w-full bg-gray-800 h-1.5 rounded-full mb-3">
-                          <div
-                            className="bg-premium-gold h-1.5 rounded-full"
-                            style={{
-                              width: `${(team.remainingPurse / team.initialPurse) * 100}%`,
-                            }}
-                          ></div>
-                        </div>
-
-                        {/* Players List */}
-                        <div className="bg-black/20 p-2 rounded">
-                          <p className="text-[10px] font-bold opacity-50 uppercase mb-2">
-                            Players ({team.players?.length})
-                          </p>
-                          <div className="space-y-1">
-                            {team.players?.map((p) => (
-                              <div
-                                key={p._id}
-                                className="flex justify-between text-[10px] text-gray-400 border-b border-gray-800/50 pb-0.5"
-                              >
-                                <span>{p.name}</span>
-                                <span className="text-white font-mono">
-                                  {formatPrice(p.soldPrice)}
-                                </span>
-                              </div>
-                            ))}
+                          <div className="space-y-4">
+                            <div className="flex items-center gap-3">
+                              <span className="bg-blue-600/10 text-blue-400 border border-blue-500/20 px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest italic">TARGET_ALPHA</span>
+                              <span className="text-[9px] font-black text-gray-700 font-mono tracking-tighter">ID: {liveAuction.currentPlayer?._id.substring(0, 8).toUpperCase()}</span>
+                            </div>
+                            <h2 className="text-5xl font-black italic tracking-tighter text-white uppercase leading-none">{liveAuction.currentPlayer?.name}</h2>
+                            <div className="flex items-center gap-4">
+                              <p className="text-[10px] font-black text-gray-600 uppercase tracking-[0.4em] flex items-center gap-2">
+                                <Target size={12} className="text-gray-700" /> {liveAuction.currentPlayer?.role}
+                              </p>
+                              <div className="w-1.5 h-1.5 rounded-full bg-blue-500/20"></div>
+                              <p className="text-[10px] font-black text-gray-600 uppercase tracking-[0.4em]">{liveAuction.currentPlayer?.dept}</p>
+                            </div>
                           </div>
                         </div>
-                      </>
+
+                        <div className="grid grid-cols-2 gap-10 py-10 border-y border-white/5 bg-white/[0.01] rounded-3xl px-8 relative overflow-hidden group">
+                          <div className="absolute inset-0 bg-blue-500/[0.02] opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                          <div className="space-y-3 relative z-10">
+                            <p className="text-[10px] font-black uppercase text-gray-700 tracking-[0.3em] font-mono italic">BASE_VALUATION</p>
+                            <p className="text-4xl font-black italic font-mono text-gray-400 tabular-nums">{formatPrice(liveAuction.currentPlayer?.basePrice)}</p>
+                          </div>
+                          <div className="space-y-3 text-right relative z-10">
+                            <p className="text-[10px] font-black uppercase text-blue-400 tracking-[0.3em] font-mono italic">PEAK_BID_SIGNATURE</p>
+                            <p className="text-5xl font-black italic font-mono text-blue-400 tabular-nums shimmer-text">{formatPrice(liveAuction.highestBid)}</p>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col gap-10">
+                          <div className="flex justify-between items-center px-6">
+                            <div className="flex items-center gap-4">
+                              <div className="w-1 h-1 rounded-full bg-blue-500 animate-pulse"></div>
+                              <p className="text-[10px] font-black text-gray-700 uppercase tracking-[0.4em] italic">CURRENT_ALPHA_COMMANDER</p>
+                            </div>
+                            <p className="text-sm font-black italic text-blue-400 uppercase tracking-tighter shimmer-text">
+                              {liveAuction.highestBidderName || "SIGNAL_PENDING_BIDS..."}
+                            </p>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-8">
+                            <button
+                              onClick={sellPlayer}
+                              className="bg-blue-600 hover:bg-blue-500 text-white py-6 rounded-2xl flex items-center justify-center gap-4 transition-all group shadow-[0_0_50px_rgba(37,99,235,0.4)] border border-blue-400/30 active:scale-95"
+                            >
+                              <CheckCircle size={24} className="group-hover:scale-110 transition-transform text-white animate-pulse" />
+                              <span className="text-lg font-black italic tracking-[0.2em] uppercase">EXECUTE_SALE</span>
+                            </button>
+                            <button
+                              onClick={markUnsold}
+                              className="bg-black/60 border border-white/10 hover:border-red-500/30 text-white hover:text-red-500 py-6 rounded-2xl flex items-center justify-center gap-4 transition-all group active:scale-95 py-6"
+                            >
+                              <XCircle size={24} className="group-hover:rotate-90 transition-transform" />
+                              <span className="text-lg font-black italic tracking-[0.2em] uppercase">VOID_ASSET</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Operational Telemetry Analytics Feed */}
+                    <div className="glass-panel flex flex-col h-full border-white/5 bg-black/40 relative overflow-hidden group">
+                      <div className="absolute inset-0 bg-blue-500/[0.01] opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                      <div className="p-8 border-b border-white/5 bg-white/[0.02] flex items-center justify-between relative z-10">
+                        <div className="flex items-center gap-4">
+                          <Activity size={20} className="text-blue-500 animate-pulse" />
+                          <h3 className="text-[11px] font-black italic uppercase tracking-[0.4em] text-white">BATTLE_TELEMETRY</h3>
+                        </div>
+                        <div className="flex items-center gap-3 bg-black/60 px-5 py-2 rounded-xl border border-white/10 shadow-[inner_0_0_10px_rgba(255,255,255,0.05)]">
+                          <Clock size={12} className="text-blue-500" />
+                          <span className="text-[11px] font-black italic text-white font-mono tracking-tighter">{String(liveAuction.timer).padStart(2, '0')}<span className="text-gray-600 text-[8px] ml-1 uppercase">s_window</span></span>
+                        </div>
+                      </div>
+                      <div className="flex-1 p-8 space-y-6 overflow-y-auto custom-scrollbar relative z-10">
+                        {liveAuction.bidHistory && liveAuction.bidHistory.length > 0 ? (
+                          [...liveAuction.bidHistory].reverse().map((log, idx) => (
+                            <motion.div
+                              initial={{ opacity: 0, x: 15 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              key={idx}
+                              className="flex justify-between items-center p-6 rounded-2xl border border-white/5 bg-white/[0.02] hover:border-blue-500/20 transition-all group/bid relative overflow-hidden"
+                            >
+                              <div className="absolute inset-y-0 left-0 w-1 bg-blue-500 opacity-20 group-hover/bid:opacity-100 transition-opacity"></div>
+                              <div className="flex items-center gap-5">
+                                <div className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse shadow-[0_0_8px_rgba(59,130,246,0.6)]"></div>
+                                <div>
+                                  <span className="text-xs font-black uppercase tracking-[0.2em] text-white italic group-hover/bid:text-blue-400 transition-colors">
+                                    {log.teamName}
+                                  </span>
+                                  <p className="text-[8px] font-black text-gray-700 uppercase tracking-widest mt-1 italic">FRANCHISE_COMMANDER</p>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <span className="text-xl font-black italic font-mono text-blue-400 tracking-tighter shimmer-text">{formatPrice(log.amount)}</span>
+                                <p className="text-[7px] font-black text-gray-800 uppercase italic tracking-widest mt-0.5">SIGNED_PROTOCOL</p>
+                              </div>
+                            </motion.div>
+                          ))
+                        ) : (
+                          <div className="h-full flex flex-col items-center justify-center opacity-30 gap-8 py-32">
+                            <div className="relative">
+                              <div className="absolute inset-0 bg-blue-500/20 blur-3xl animate-pulse"></div>
+                              <Target size={80} className="text-gray-800 relative z-10" />
+                            </div>
+                            <div className="text-center space-y-2">
+                              <p className="text-[10px] font-black uppercase tracking-[0.5em] text-gray-600 italic">STANDBY_STATUS</p>
+                              <p className="text-[9px] font-black text-gray-800 uppercase tracking-widest italic">Awaiting Bid Signal Detection...</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="glass-panel p-36 flex flex-col items-center justify-center text-center space-y-12 border-dashed border-2 border-white/5 bg-black/[0.05] relative overflow-hidden group shadow-2xl"
+                  >
+                    <div className="absolute inset-0 bg-blue-500/[0.01] group-hover:bg-blue-500/[0.02] transition-colors"></div>
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-blue-500/10 blur-[100px] rounded-full animate-pulse"></div>
+                      <div className="w-32 h-32 rounded-full bg-white/[0.02] border border-white/10 flex items-center justify-center relative z-10 group-hover:scale-105 transition-transform duration-700">
+                        <Shield size={56} className="text-gray-700 group-hover:text-blue-500/30 transition-colors" />
+                        <div className="absolute inset-0 border border-blue-500/20 rounded-full animate-reverse-spin opacity-20"></div>
+                      </div>
+                    </div>
+                    <div className="space-y-6 relative z-10">
+                      <h2 className="text-5xl font-black italic uppercase tracking-tighter text-gray-500 group-hover:text-white transition-colors duration-500">SYSTEM <span className="text-blue-500/30 group-hover:text-blue-500 transition-colors duration-500 shimmer-text font-mono tracking-[0.5em] ml-4">IDLE</span></h2>
+                      <p className="text-xs text-gray-600 uppercase tracking-[0.4em] max-w-xl mx-auto leading-relaxed font-black italic opacity-60">The Global Tactical Grid is currently in standby. Select an Alpha Target from the Dossier Queue to transmit the auction protocol.</p>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Advanced Access Management Matrix */}
+              <div className="grid lg:grid-cols-2 gap-10">
+                {/* Authorized Tactical Personnel */}
+                <div className="glass-panel p-10 space-y-8 border-white/5 bg-black/40 relative group overflow-hidden shadow-2xl">
+                  <div className="absolute inset-0 bg-blue-500/[0.01] opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                  <div className="flex items-center justify-between relative z-10">
+                    <div className="flex items-center gap-4">
+                      <Shield size={20} className="text-blue-400" />
+                      <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-white italic">AUTHORIZED_PEERS</h3>
+                    </div>
+                    <span className="text-[9px] font-black text-gray-700 uppercase tracking-widest font-mono italic">ACTIVE_POOL_{allAdmins.length}</span>
+                  </div>
+                  <div className="space-y-5 max-h-[350px] overflow-y-auto pr-4 custom-scrollbar relative z-10">
+                    {allAdmins.map((adm, idx) => (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.98 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.3 + (idx * 0.05) }}
+                        key={adm._id}
+                        className="flex justify-between items-center p-5 bg-white/[0.02] border border-white/5 rounded-2xl hover:border-blue-500/20 transition-all group/card"
+                      >
+                        <div className="flex items-center gap-5">
+                          <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center group-hover/card:bg-blue-600 transition-colors">
+                            <UserIcon size={16} className="text-blue-400 group-hover/card:text-white transition-colors" />
+                          </div>
+                          <div>
+                            <p className="text-xs font-black text-white italic group-hover/card:text-blue-400 transition-colors uppercase leading-none">{adm.username}</p>
+                            <p className="text-[9px] font-black text-gray-700 uppercase tracking-widest mt-2 italic font-mono">{adm.email}</p>
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-end">
+                          <div className="flex items-center gap-2 mb-1">
+                            <div className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]"></div>
+                            <span className="text-[9px] font-black text-gray-700 uppercase italic">TIER_1_OP</span>
+                          </div>
+                          <p className="text-[7px] font-black text-gray-800 uppercase italic font-mono tracking-widest">ACCESS_GRANTED</p>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Secure Access Requests & Team Validations */}
+                <div className="glass-panel p-10 space-y-8 border-red-500/10 bg-black/40 shadow-2xl group overflow-hidden relative">
+                  <div className="absolute inset-0 bg-red-500/[0.01] opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                  <div className="flex items-center justify-between relative z-10">
+                    <div className="flex items-center gap-4">
+                      <Zap size={20} className="text-red-500 animate-pulse" />
+                      <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-white italic">OPERATIONAL_APPROVALS</h3>
+                    </div>
+                    <span className="text-[9px] font-black text-red-500/60 uppercase tracking-widest italic animate-pulse">ACTION_REQUIRED_NOW</span>
+                  </div>
+
+                  <div className="space-y-8 max-h-[350px] overflow-y-auto pr-4 custom-scrollbar relative z-10">
+                    {pendingAdmins.length > 0 && (
+                      <div className="space-y-5">
+                        <p className="text-[10px] font-black uppercase text-gray-700 tracking-[0.3em] font-mono italic px-2 border-l-2 border-red-500/30">ADMIN_ENROLLMENT</p>
+                        {pendingAdmins.map(adm => (
+                          <div key={adm._id} className="flex justify-between items-center p-5 bg-red-500/[0.03] border border-red-500/10 rounded-2xl group/adm transition-all hover:bg-red-500/[0.06]">
+                            <div className="flex items-center gap-5">
+                              <AlertCircle size={20} className="text-red-500" />
+                              <div>
+                                <p className="text-sm font-black text-white italic leading-none">{adm.username.toUpperCase()}</p>
+                                <p className="text-[9px] font-black text-gray-700 uppercase tracking-widest mt-2 italic font-mono">{adm.email}</p>
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => handleAdminApproval(adm._id)}
+                              className="px-6 py-2.5 bg-red-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-[0_0_15px_rgba(220,38,38,0.3)] border border-red-400/30 hover:bg-red-500 transition-all hover:scale-105"
+                            >
+                              AUTHORIZE_NOW
+                            </button>
+                          </div>
+                        ))}
+                      </div>
                     )}
 
-                    {team.status === "rejected" && (
-                      <p className="text-[10px] text-gray-500 italic">
-                        This team has been rejected.
-                      </p>
-                    )}
+                    <div className="space-y-5 pt-8 border-t border-white/5">
+                      <p className="text-[10px] font-black uppercase text-gray-700 tracking-[0.3em] font-mono italic px-2 border-l-2 border-blue-500/30">TEAM_SQUAD_VALIDATION</p>
+                      {teams.filter(t => t.status === 'pending').map(team => (
+                        <div key={team._id} className="flex justify-between items-center p-6 bg-white/[0.01] border border-white/5 rounded-2xl hover:bg-white/[0.03] transition-all group/team relative overflow-hidden">
+                          <div className="absolute inset-y-0 left-0 w-1 bg-yellow-500/50 opacity-100"></div>
+                          <div className="relative z-10 px-2">
+                            <p className="text-sm font-black italic text-white uppercase leading-none tracking-tight">{team.name}</p>
+                            <div className="flex items-center gap-3 mt-3">
+                              <p className="text-[9px] font-black text-gray-700 uppercase tracking-widest italic">CAPTAIN: {team.captain?.username.toUpperCase()}</p>
+                              <div className="w-1 h-1 rounded-full bg-gray-800"></div>
+                              <p className="text-[9px] font-black text-blue-500/60 uppercase italic font-mono tracking-tighter">PROTO_PENDING</p>
+                            </div>
+                          </div>
+                          <div className="flex gap-3 relative z-10">
+                            <button onClick={() => handleTeamStatus(team._id, 'approved')} className="w-11 h-11 bg-green-500/10 text-green-500 rounded-xl border border-green-500/20 hover:bg-green-600 hover:text-white transition-all shadow-lg hover:shadow-green-500/20 flex items-center justify-center"><CheckCircle size={18} /></button>
+                            <button onClick={() => handleTeamStatus(team._id, 'rejected')} className="w-11 h-11 bg-red-500/10 text-red-500 rounded-xl border border-red-500/20 hover:bg-red-600 hover:text-white transition-all shadow-lg hover:shadow-red-500/20 flex items-center justify-center"><XCircle size={18} /></button>
+                          </div>
+                        </div>
+                      ))}
+                      {teams.filter(t => t.status === 'pending').length === 0 && pendingAdmins.length === 0 && (
+                        <div className="py-20 text-center opacity-30 flex flex-col items-center gap-6">
+                          <div className="relative">
+                            <div className="absolute inset-0 bg-blue-500/10 blur-[50px] rounded-full"></div>
+                            <CheckCircle size={44} className="text-gray-800 relative z-10" />
+                          </div>
+                          <div className="space-y-2">
+                            <p className="text-[10px] font-black uppercase tracking-[0.5em] text-gray-700 italic">SIG_POOL_VACANT</p>
+                            <p className="text-[9px] font-black text-gray-800 uppercase italic tracking-widest">No Priority Pending Verification Signals Detectable</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                ))}
+                </div>
+              </div>
+            </section>
+          </div>
+        </main>
+
+        <footer className="p-10 border-t border-white/5 text-center flex flex-col items-center gap-8 bg-black/20 relative overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-500/[0.01] to-transparent animate-shimmer"></div>
+          <div className="flex items-center gap-16 relative z-10">
+            <div className="flex items-center gap-4">
+              <div className="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-[0_0_12px_rgba(59,130,246,0.6)] animate-pulse"></div>
+              <span className="text-[10px] font-black text-gray-700 uppercase tracking-[0.5em] italic">GLOBAL_OPS_CORE v.4.1.28</span>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="w-2.5 h-2.5 rounded-full bg-blue-600/30 shadow-[0_0_12px_rgba(59,130,246,0.2)]"></div>
+              <span className="text-[10px] font-black text-gray-700 uppercase tracking-[0.5em] italic">CRYPTO_LOG_SYNC_OK</span>
+            </div>
+            <div className="flex items-center gap-4">
+              <Radio size={14} className="text-blue-500/40 animate-pulse" />
+              <span className="text-[10px] font-black text-gray-700 uppercase tracking-[0.5em] italic">ARENA_LIVE_ACTIVE</span>
             </div>
           </div>
-        </div>
+          <div className="space-y-4 relative z-10">
+            <p className="text-[10px] font-black text-gray-800 uppercase tracking-[1.8em] italic leading-none pl-[1.8em]">GULTI TACTICAL AUCTION INFRASTRUCTURE</p>
+            <div className="w-full h-px bg-white/5 max-w-[400px] mx-auto relative overflow-hidden">
+              <motion.div animate={{ x: ['-100%', '100%'] }} transition={{ duration: 3, repeat: Infinity, ease: "linear" }} className="absolute inset-0 bg-blue-500/20" />
+            </div>
+          </div>
+        </footer>
       </div>
     </div>
   );

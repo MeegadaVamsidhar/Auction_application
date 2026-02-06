@@ -52,7 +52,12 @@ router.post("/register", async (req, res) => {
 
     // Normalize Role
     let normalizedRole = role;
-    if (role === "All Rounder") normalizedRole = "All-rounder";
+    const roleUpper = role.toUpperCase().replace(/\s+|-/g, "");
+
+    if (roleUpper === "ALLROUNDER") normalizedRole = "All-rounder";
+    else if (roleUpper === "BATSMAN") normalizedRole = "Batsman";
+    else if (roleUpper === "BOWLER") normalizedRole = "Bowler";
+    else if (roleUpper === "WICKETKEEPER") normalizedRole = "Wicket-keeper";
 
     // Ensure role matches enum EXACTLY
     const validRoles = ["Batsman", "Bowler", "All-rounder", "Wicket-keeper"];
@@ -60,7 +65,7 @@ router.post("/register", async (req, res) => {
       return res
         .status(400)
         .json({
-          error: `Invalid role selected. Must be one of: ${validRoles.join(", ")}`,
+          error: `Invalid role selected (${role}). Must be one of: ${validRoles.join(", ")}`,
         });
     }
 

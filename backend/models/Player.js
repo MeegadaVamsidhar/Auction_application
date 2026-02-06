@@ -7,7 +7,7 @@ const playerSchema = new mongoose.Schema(
     year: { type: String, required: true },
     role: {
       type: String,
-      enum: ["BATSMAN", "BOWLING", "BOWLING ALLROUNDER", "BATTING ALLROUNDER"],
+      enum: ["Batsman", "Bowler", "All-rounder", "Wicket-keeper"],
       required: true,
     },
     battingStyle: { type: String },

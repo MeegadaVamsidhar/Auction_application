@@ -318,7 +318,7 @@ router.post("/players/register", async (req, res) => {
 router.get("/teams", async (req, res) => {
   try {
     const teams = await Team.find()
-      .populate("captain", "username")
+      .populate("captain", "username mobile email")
       .populate("players");
     res.json(teams);
   } catch (err) {
@@ -376,9 +376,29 @@ router.delete("/players/:id", async (req, res) => {
 // Update team details
 router.put("/teams/:id", async (req, res) => {
   try {
-    const team = await Team.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-    });
+    const { name, captainName, captainMobile, captainEmail, ...rest } = req.body;
+
+    // Use findById instead of findByIdAndUpdate to have more control
+    const team = await Team.findById(req.params.id);
+    if (!team) return res.status(404).json({ error: "Team not found" });
+
+    if (name) team.name = name;
+
+    // Update other fields
+    Object.assign(team, rest);
+
+    // Update Captain User Details
+    if (team.captain && (captainName || captainMobile || captainEmail)) {
+      const captainUser = await User.findById(team.captain);
+      if (captainUser) {
+        if (captainName) captainUser.username = captainName;
+        if (captainMobile) captainUser.mobile = captainMobile;
+        if (captainEmail) captainUser.email = captainEmail;
+        await captainUser.save();
+      }
+    }
+
+    await team.save();
     res.json(team);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -591,6 +611,68 @@ router.post("/settings/player-list-link", async (req, res) => {
     }
 
     res.json(setting);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Assign a player as captain of a team
+router.post("/assign-captain", async (req, res) => {
+  try {
+    const { playerId, teamId } = req.body;
+
+    const player = await Player.findById(playerId);
+    const team = await Team.findById(teamId);
+
+    if (!player || !team) {
+      return res.status(404).json({ error: "Player or Team not found" });
+    }
+
+    // Role Normalization Safeguard (for legacy data)
+    let normalizedRole = player.role;
+    const roleUpper = player.role.toUpperCase().replace(/\s+|-/g, "");
+    if (roleUpper === "BATSMAN") normalizedRole = "Batsman";
+    else if (roleUpper === "BOWLER" || roleUpper === "BOWLING") normalizedRole = "Bowler";
+    else if (roleUpper.includes("ALLROUNDER")) normalizedRole = "All-rounder";
+    else if (roleUpper === "WICKETKEEPER") normalizedRole = "Wicket-keeper";
+    player.role = normalizedRole;
+
+    // 1. Find or Create User for the player
+    let user = await User.findOne({ mobile: player.mobile });
+
+    if (!user) {
+      // Create a user for the player if they don't have one
+      user = new User({
+        username: player.name,
+        mobile: player.mobile,
+        password: player.password || "captain123", // Fallback if no password
+        role: "captain",
+        isApproved: true,
+        team: team._id,
+      });
+    } else {
+      user.role = "captain";
+      user.isApproved = true;
+      user.team = team._id;
+    }
+    await user.save();
+
+    // 2. Update Team & Financials
+    // Deduct base price from team purse if not already added
+    if (!team.players.includes(player._id)) {
+      team.players.push(player._id);
+      team.remainingPurse -= player.basePrice || 0;
+    }
+    team.captain = user._id;
+    await team.save();
+
+    // 3. Update Player Status
+    player.team = team._id;
+    player.status = "sold"; // Mark as sold so they don't appear in auction
+    player.soldPrice = player.basePrice || 0;
+    await player.save();
+
+    res.json({ message: `Player ${player.name} is now captain of ${team.name} and added to the squad.`, team, user });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

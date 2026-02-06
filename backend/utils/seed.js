@@ -26,6 +26,10 @@ const seedAdmin = async () => {
                 existingAdmin.email = 'reddymeegada22@gmail.com';
                 needsUpdate = true;
             }
+            if (existingAdmin.mobile !== defaultMobile) {
+                existingAdmin.mobile = defaultMobile;
+                needsUpdate = true;
+            }
             if (!existingAdmin.isApproved) {
                 existingAdmin.isApproved = true;
                 needsUpdate = true;

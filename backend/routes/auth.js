@@ -140,16 +140,35 @@ router.post("/register", async (req, res) => {
     }
 
     if (role === "captain") {
+      const Player = require("../models/Player");
       const team = new Team({
         name: teamName,
         initialPurse: 8000, // Representing 80 CR (8000 Lakhs)
         remainingPurse: 8000,
         captain: user._id,
       });
+
+      // CHECK: If a player with the same mobile exists, auto-allot them to the team
+      const existingPlayer = await Player.findOne({ mobile: user.mobile });
+      if (existingPlayer) {
+        // Link player to team
+        existingPlayer.team = team._id;
+        existingPlayer.status = "sold";
+        existingPlayer.soldPrice = existingPlayer.basePrice || 0;
+        await existingPlayer.save();
+
+        // Add player to team and deduct purse
+        team.players.push(existingPlayer._id);
+        team.remainingPurse -= existingPlayer.basePrice || 0;
+      }
+
       await team.save();
 
       // Link team back to user
       user.team = team._id;
+      // Auto-approve captains if they are linked to a player? 
+      // User said: "directly send him to the team dont ask for auction"
+      // user.isApproved = true; // Optional: Keep manual approval for security or auto-approve?
       await user.save();
     }
 
@@ -192,13 +211,13 @@ router.post("/login", async (req, res) => {
 
     // Search in Admins first
     let user = await Admin.findOne({
-      $or: [{ mobile: identifier }, { username: identifier }],
+      $or: [{ mobile: identifier }, { username: identifier }, { email: identifier }],
     });
 
     // Search in Users if not found in Admins
     if (!user) {
       user = await User.findOne({
-        $or: [{ mobile: identifier }, { username: identifier }],
+        $or: [{ mobile: identifier }, { username: identifier }, { email: identifier }],
       });
     }
 
