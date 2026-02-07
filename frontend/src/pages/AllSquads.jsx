@@ -49,11 +49,13 @@ const AllSquads = () => {
 
     return (
         <div className="min-h-screen bg-premium-dark text-white font-sans selection:bg-premium-gold/30 relative overflow-hidden">
-            {/* Cinematic Background */}
-            <div className="fixed inset-0 z-0 pointer-events-none">
-                <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-premium-gold/[0.03] rounded-full blur-[150px]"></div>
-                <div className="absolute -bottom-[20%] -left-[10%] w-[600px] h-[600px] bg-blue-500/[0.03] rounded-full blur-[120px]"></div>
-                <div className="absolute inset-0 opacity-[0.15]" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(212, 175, 55, 0.1) 1px, transparent 0)', backgroundSize: '60px 60px' }}></div>
+            {/* Cinematic Background Layer */}
+            <div className="cinematic-bg fixed z-0">
+                <div className="cinematic-glow w-[800px] h-[800px] -top-96 -right-96 bg-premium-gold/10"></div>
+                <div className="cinematic-glow w-[600px] h-[600px] bottom-0 left-0 bg-blue-600/10"></div>
+                <div className="cinematic-bg modern-grid opacity-15"></div>
+                <div className="absolute inset-0 bg-gradient-to-b from-premium-dark/50 to-premium-dark"></div>
+                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-[0.02]"></div>
             </div>
 
             <div className="max-w-7xl mx-auto px-6 py-12 lg:py-24 relative z-10">

@@ -7,6 +7,8 @@ const teamSchema = new mongoose.Schema(
     initialPurse: { type: Number, required: true, default: 8000 },
     remainingPurse: { type: Number, required: true, default: 8000 },
     captain: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    captainName: { type: String },
+    captainPhone: { type: String },
     status: {
       type: String,
       enum: ["pending", "approved", "rejected"],

@@ -103,8 +103,8 @@ const Register = () => {
                 setFormData({ ...formData, role: e.target.value })
               }
             >
-              <option value="captain">Team Captain</option>
-              <option value="admin">Auction Admin</option>
+              <option value="captain" className="text-black">Team Captain</option>
+              <option value="admin" className="text-black">Auction Admin</option>
             </select>
           </div>
 

@@ -13,7 +13,8 @@ import {
   Target,
   Clock,
   Zap,
-  Star
+  Star,
+  Wallet
 } from "lucide-react";
 import io from "socket.io-client";
 
@@ -91,11 +92,13 @@ const PlayerStatus = () => {
 
   return (
     <div className="min-h-screen bg-premium-dark text-white font-sans selection:bg-premium-gold/30 relative overflow-hidden">
-      {/* Cinematic Background */}
-      <div className="absolute inset-0 z-0">
-        <div className="absolute top-0 right-0 w-full h-[600px] bg-gradient-to-b from-premium-gold/[0.05] to-transparent"></div>
-        <div className="absolute -top-[10%] -right-[10%] w-[50%] h-[50%] bg-premium-gold/[0.03] rounded-full blur-[120px] animate-pulse-slow"></div>
-        <div className="absolute -bottom-[10%] -left-[10%] w-[50%] h-[50%] bg-blue-500/[0.03] rounded-full blur-[120px]"></div>
+      {/* Cinematic Background Layer */}
+      <div className="cinematic-bg z-0">
+        <div className="cinematic-glow w-[800px] h-[800px] -top-96 -right-96 bg-premium-gold/10"></div>
+        <div className="cinematic-glow w-[600px] h-[600px] bottom-0 left-0 bg-premium-accent/10"></div>
+        <div className="cinematic-bg modern-grid opacity-15"></div>
+        <div className="absolute inset-0 bg-gradient-to-tr from-premium-dark/80 via-transparent to-transparent"></div>
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-[0.02] mix-blend-overlay"></div>
       </div>
 
       <div className="relative z-10 max-w-5xl mx-auto px-6 py-12 lg:py-24">
@@ -145,13 +148,13 @@ const PlayerStatus = () => {
 
               <div className="w-full md:w-auto">
                 <div className={`p-8 rounded-3xl border backdrop-blur-xl flex flex-col items-center md:items-end gap-2 text-center md:text-right shadow-2xl ${playerData?.status === 'sold' ? 'bg-green-500/5 border-green-500/20' :
-                    playerData?.status === 'unsold' ? 'bg-red-500/5 border-red-500/20' :
-                      'bg-premium-gold/5 border-premium-gold/20'
+                  playerData?.status === 'unsold' ? 'bg-red-500/5 border-red-500/20' :
+                    'bg-premium-gold/5 border-premium-gold/20'
                   }`}>
                   <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-500">Current Market Position</p>
                   <h2 className={`text-4xl font-black italic uppercase tracking-tighter ${playerData?.status === 'sold' ? 'text-green-500' :
-                      playerData?.status === 'unsold' ? 'text-red-500' :
-                        'text-premium-gold'
+                    playerData?.status === 'unsold' ? 'text-red-500' :
+                      'text-premium-gold'
                     }`}>
                     {playerData?.status}
                   </h2>

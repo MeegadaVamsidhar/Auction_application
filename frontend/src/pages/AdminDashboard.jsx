@@ -29,7 +29,9 @@ import {
   Fingerprint,
   Radio,
   Wifi,
-  Database
+  Database,
+  Edit3,
+  X
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -42,6 +44,16 @@ const AdminDashboard = () => {
   const [allAdmins, setAllAdmins] = useState([]);
   const [liveAuction, setLiveAuction] = useState(null);
   const [activeTab, setActiveTab] = useState("control");
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingPlayer, setEditingPlayer] = useState(null);
+  const [editFormData, setEditFormData] = useState({
+    name: "",
+    mobile: "",
+    role: "",
+    dept: "",
+    year: "",
+    basePrice: 5,
+  });
   const navigate = useNavigate();
 
   const formatPrice = (value) => {
@@ -136,6 +148,31 @@ const AdminDashboard = () => {
     socketRef.current.emit("startAuction", { player });
   };
 
+  const handleEditPlayer = (player) => {
+    setEditingPlayer(player);
+    setEditFormData({
+      name: player.name,
+      mobile: player.mobile,
+      role: player.role,
+      dept: player.dept,
+      year: player.year,
+      basePrice: player.basePrice || 5,
+    });
+    setShowEditModal(true);
+  };
+
+  const handleUpdatePlayer = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.put(`${API_URL}/api/admin/players/${editingPlayer._id}`, editFormData);
+      setShowEditModal(false);
+      fetchData();
+      alert("Player updated successfully!");
+    } catch (err) {
+      alert(err.response?.data?.error || "Error updating player");
+    }
+  };
+
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -194,13 +231,13 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen bg-premium-dark text-white font-sans selection:bg-premium-gold/30 flex">
-      {/* Cinematic Background Grid */}
-      <div className="fixed inset-0 z-0 pointer-events-none opacity-40">
-        <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(59, 130, 246, 0.05) 1px, transparent 0)', backgroundSize: '60px 60px' }}></div>
-        <div className="absolute top-0 right-0 w-[1000px] h-[1000px] bg-blue-500/[0.03] rounded-full blur-[200px] animate-pulse-slow"></div>
-        <div className="absolute bottom-0 left-0 w-[800px] h-[800px] bg-premium-gold/[0.02] rounded-full blur-[150px] animate-pulse-slow"></div>
-        {/* Procedural Data Line Overlay */}
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-[0.03]"></div>
+      {/* Cinematic Background Layer */}
+      <div className="cinematic-bg fixed z-0">
+        <div className="cinematic-glow w-[1000px] h-[1000px] -top-96 -right-96 bg-premium-accent/15"></div>
+        <div className="cinematic-glow w-[800px] h-[800px] bottom-0 left-0 bg-premium-gold/5"></div>
+        <div className="cinematic-bg modern-grid opacity-30"></div>
+        <div className="absolute inset-0 bg-gradient-to-tr from-premium-dark via-transparent to-transparent"></div>
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-[0.02]"></div>
       </div>
 
       <div className="relative z-10 w-full flex flex-col">
@@ -363,10 +400,19 @@ const AdminDashboard = () => {
                             <span className="text-[8px] font-black text-gray-700 uppercase tracking-widest">{player.dept}</span>
                           </div>
                         </div>
-                        <span className={`text-[8px] px-3 py-1 rounded-xl font-black uppercase tracking-widest italic border ${player.status === 'sold' ? 'bg-green-500/10 text-green-500 border-green-500/20' :
-                          player.status === 'pending' ? 'bg-blue-500/10 text-blue-500 border-blue-500/20 animate-pulse' :
-                            'bg-white/5 text-gray-600 border-white/10'
-                          }`}>{player.status}</span>
+                        <div className="flex flex-col items-end gap-2">
+                          <span className={`text-[8px] px-3 py-1 rounded-xl font-black uppercase tracking-widest italic border ${player.status === 'sold' ? 'bg-green-500/10 text-green-500 border-green-500/20' :
+                            player.status === 'pending' ? 'bg-blue-500/10 text-blue-500 border-blue-500/20 animate-pulse' :
+                              'bg-white/5 text-gray-600 border-white/10'
+                            }`}>{player.status}</span>
+                          <button
+                            onClick={() => handleEditPlayer(player)}
+                            className="w-7 h-7 bg-white/5 hover:bg-blue-600/20 border border-white/5 hover:border-blue-500/30 rounded-lg flex items-center justify-center text-gray-600 hover:text-blue-400 transition-all"
+                            title="Refine Asset Details"
+                          >
+                            <Edit3 size={12} />
+                          </button>
+                        </div>
                       </div>
 
                       <div className="flex gap-2">
@@ -423,59 +469,65 @@ const AdminDashboard = () => {
                               <div className="absolute inset-x-0 bottom-0 h-1 bg-blue-400/40 animate-scan"></div>
                             </div>
                           </div>
-                          <div className="space-y-4">
-                            <div className="flex items-center gap-3">
-                              <span className="bg-blue-600/10 text-blue-400 border border-blue-500/20 px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest italic">TARGET_ALPHA</span>
-                              <span className="text-[9px] font-black text-gray-700 font-mono tracking-tighter">ID: {liveAuction.currentPlayer?._id.substring(0, 8).toUpperCase()}</span>
-                            </div>
-                            <h2 className="text-5xl font-black italic tracking-tighter text-white uppercase leading-none">{liveAuction.currentPlayer?.name}</h2>
+                          <div className="space-y-5">
                             <div className="flex items-center gap-4">
-                              <p className="text-[10px] font-black text-gray-600 uppercase tracking-[0.4em] flex items-center gap-2">
-                                <Target size={12} className="text-gray-700" /> {liveAuction.currentPlayer?.role}
+                              <span className="bg-blue-600/10 text-blue-400 border border-blue-500/20 px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest italic flex items-center gap-2">
+                                <Shield size={10} /> TARGET_ALPHA
+                              </span>
+                              <span className="text-[10px] font-black text-gray-700 font-mono tracking-tighter uppercase px-3 py-1 bg-white/[0.03] rounded-lg border border-white/5">
+                                SIG_ID: {liveAuction.currentPlayer?._id.substring(0, 8).toUpperCase()}
+                              </span>
+                            </div>
+                            <h2 className="text-4xl font-black italic tracking-tighter text-white uppercase leading-none shimmer-text">{liveAuction.currentPlayer?.name}</h2>
+                            <div className="flex items-center gap-6 pt-2">
+                              <p className="text-[11px] font-black text-gray-500 uppercase tracking-[0.4em] flex items-center gap-3">
+                                <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+                                {liveAuction.currentPlayer?.role}
                               </p>
-                              <div className="w-1.5 h-1.5 rounded-full bg-blue-500/20"></div>
-                              <p className="text-[10px] font-black text-gray-600 uppercase tracking-[0.4em]">{liveAuction.currentPlayer?.dept}</p>
+                              <div className="w-px h-3 bg-white/10"></div>
+                              <p className="text-[11px] font-black text-gray-500 uppercase tracking-[0.4em] italic">{liveAuction.currentPlayer?.dept}</p>
                             </div>
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-10 py-10 border-y border-white/5 bg-white/[0.01] rounded-3xl px-8 relative overflow-hidden group">
-                          <div className="absolute inset-0 bg-blue-500/[0.02] opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                          <div className="space-y-3 relative z-10">
-                            <p className="text-[10px] font-black uppercase text-gray-700 tracking-[0.3em] font-mono italic">BASE_VALUATION</p>
-                            <p className="text-4xl font-black italic font-mono text-gray-400 tabular-nums">{formatPrice(liveAuction.currentPlayer?.basePrice)}</p>
+                        <div className="grid grid-cols-2 gap-12 py-12 border-y border-white/5 bg-white/[0.01] rounded-[40px] px-12 relative overflow-hidden group">
+                          <div className="absolute inset-0 bg-blue-500/[0.03] opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                          <div className="space-y-4 relative z-10 border-r border-white/5 pr-4">
+                            <p className="text-[11px] font-black uppercase text-gray-700 tracking-[0.3em] font-mono italic">BASE_VALUATION</p>
+                            <p className="text-3xl font-black italic font-mono text-gray-400 tabular-nums tracking-tighter">{formatPrice(liveAuction.currentPlayer?.basePrice)}</p>
                           </div>
-                          <div className="space-y-3 text-right relative z-10">
-                            <p className="text-[10px] font-black uppercase text-blue-400 tracking-[0.3em] font-mono italic">PEAK_BID_SIGNATURE</p>
-                            <p className="text-5xl font-black italic font-mono text-blue-400 tabular-nums shimmer-text">{formatPrice(liveAuction.highestBid)}</p>
+                          <div className="space-y-4 text-right relative z-10">
+                            <p className="text-[11px] font-black uppercase text-blue-400 tracking-[0.3em] font-mono italic">PEAK_BID_SIGNATURE</p>
+                            <p className="text-4xl font-black italic font-mono text-blue-400 tabular-nums shimmer-text tracking-tighter leading-none">{formatPrice(liveAuction.highestBid)}</p>
                           </div>
                         </div>
 
-                        <div className="flex flex-col gap-10">
-                          <div className="flex justify-between items-center px-6">
+                        <div className="flex flex-col gap-10 pt-4">
+                          <div className="px-10 space-y-4">
                             <div className="flex items-center gap-4">
-                              <div className="w-1 h-1 rounded-full bg-blue-500 animate-pulse"></div>
-                              <p className="text-[10px] font-black text-gray-700 uppercase tracking-[0.4em] italic">CURRENT_ALPHA_COMMANDER</p>
+                              <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse shadow-[0_0_15px_rgba(59,130,246,0.8)]"></div>
+                              <p className="text-[11px] font-black text-blue-400/50 uppercase tracking-[0.5em] italic">ALPHA_COMMANDER_IDENT</p>
                             </div>
-                            <p className="text-sm font-black italic text-blue-400 uppercase tracking-tighter shimmer-text">
+                            <p className="text-3xl font-black italic text-white uppercase tracking-tighter shimmer-text leading-none">
                               {liveAuction.highestBidderName || "SIGNAL_PENDING_BIDS..."}
                             </p>
+                            <p className="text-[9px] font-black text-gray-800 uppercase tracking-[0.3em] italic opacity-40">Verifying encrypted financial handshake...</p>
                           </div>
 
                           <div className="grid grid-cols-2 gap-8">
                             <button
                               onClick={sellPlayer}
-                              className="bg-blue-600 hover:bg-blue-500 text-white py-6 rounded-2xl flex items-center justify-center gap-4 transition-all group shadow-[0_0_50px_rgba(37,99,235,0.4)] border border-blue-400/30 active:scale-95"
+                              className="bg-blue-600 hover:bg-blue-500 text-white py-5 rounded-2xl flex items-center justify-center gap-3 transition-all group shadow-[0_0_50px_rgba(37,99,235,0.4)] border border-blue-400/30 active:scale-95"
                             >
-                              <CheckCircle size={24} className="group-hover:scale-110 transition-transform text-white animate-pulse" />
-                              <span className="text-lg font-black italic tracking-[0.2em] uppercase">EXECUTE_SALE</span>
+                              <CheckCircle size={18} className="group-hover:scale-110 transition-transform text-white animate-pulse" />
+                              <span className="text-[11px] font-black italic tracking-[0.3em] uppercase">EXECUTE_SALE</span>
                             </button>
                             <button
                               onClick={markUnsold}
-                              className="bg-black/60 border border-white/10 hover:border-red-500/30 text-white hover:text-red-500 py-6 rounded-2xl flex items-center justify-center gap-4 transition-all group active:scale-95 py-6"
+                              className="bg-black/60 border border-white/10 hover:border-red-500/30 text-white hover:text-red-500 py-5 rounded-2xl flex items-center justify-center gap-3 transition-all group active:scale-95"
                             >
-                              <XCircle size={24} className="group-hover:rotate-90 transition-transform" />
-                              <span className="text-lg font-black italic tracking-[0.2em] uppercase">VOID_ASSET</span>
+                              <XCircle size={18} className="group-hover:rotate-90 transition-transform" />
+                              <span className="text-[11px] font-black italic tracking-[0.3em] uppercase">VOID_ASSET</span>
                             </button>
                           </div>
                         </div>
@@ -483,7 +535,7 @@ const AdminDashboard = () => {
                     </div>
 
                     {/* Operational Telemetry Analytics Feed */}
-                    <div className="glass-panel flex flex-col h-full border-white/5 bg-black/40 relative overflow-hidden group">
+                    <div className="glass-panel flex flex-col h-[650px] border-white/5 bg-black/40 relative overflow-hidden group">
                       <div className="absolute inset-0 bg-blue-500/[0.01] opacity-0 group-hover:opacity-100 transition-opacity"></div>
                       <div className="p-8 border-b border-white/5 bg-white/[0.02] flex items-center justify-between relative z-10">
                         <div className="flex items-center gap-4">
@@ -502,7 +554,7 @@ const AdminDashboard = () => {
                               initial={{ opacity: 0, x: 15 }}
                               animate={{ opacity: 1, x: 0 }}
                               key={idx}
-                              className="flex justify-between items-center p-6 rounded-2xl border border-white/5 bg-white/[0.02] hover:border-blue-500/20 transition-all group/bid relative overflow-hidden"
+                              className="flex justify-between items-center p-3 rounded-lg border border-white/5 bg-white/[0.02] hover:border-blue-500/20 transition-all group/bid relative overflow-hidden"
                             >
                               <div className="absolute inset-y-0 left-0 w-1 bg-blue-500 opacity-20 group-hover/bid:opacity-100 transition-opacity"></div>
                               <div className="flex items-center gap-5">
@@ -697,6 +749,151 @@ const AdminDashboard = () => {
           </div>
         </footer>
       </div>
+
+      {/* Advanced Asset Refinement Modal */}
+      <AnimatePresence>
+        {showEditModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 sm:p-10">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowEditModal(false)}
+              className="absolute inset-0 bg-black/90 backdrop-blur-2xl"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.98, y: 30 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.98, y: 30 }}
+              className="glass-panel w-full max-w-3xl relative z-10 overflow-hidden shadow-[0_0_100px_rgba(37,99,235,0.1)] border border-white/10"
+            >
+              <div className="p-10 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
+                <div className="flex items-center gap-6">
+                  <div className="w-14 h-14 bg-blue-600/10 border border-blue-500/20 rounded-2xl flex items-center justify-center">
+                    <Fingerprint className="text-blue-400" size={28} />
+                  </div>
+                  <div>
+                    <h2 className="text-3xl font-black italic uppercase tracking-tighter text-white">
+                      REFINE <span className="text-blue-400">ASSET</span>
+                    </h2>
+                    <p className="text-[10px] font-black text-gray-600 uppercase tracking-[0.4em] mt-1.5 italic">Modify Operational Parameters</p>
+                  </div>
+                </div>
+                <button onClick={() => setShowEditModal(false)} className="w-12 h-12 rounded-2xl bg-white/[0.03] hover:bg-red-500/10 hover:text-red-500 transition-all flex items-center justify-center border border-white/5">
+                  <X size={24} />
+                </button>
+              </div>
+
+              <form onSubmit={handleUpdatePlayer} className="p-10 space-y-10 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                  <div className="space-y-4">
+                    <label className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-500 italic">CANDIDATE IDENTITY</label>
+                    <input
+                      required
+                      type="text"
+                      value={editFormData.name}
+                      onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                      className="premium-input !bg-black/40"
+                      placeholder="FULL NAME..."
+                    />
+                  </div>
+                  <div className="space-y-4">
+                    <label className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-500 italic">COMMUNICATION UPLINK</label>
+                    <input
+                      required
+                      type="text"
+                      value={editFormData.mobile}
+                      onChange={(e) => setEditFormData({ ...editFormData, mobile: e.target.value })}
+                      className="premium-input !bg-black/40 font-mono"
+                      placeholder="+91-000-0000-000"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                  <div className="space-y-4">
+                    <label className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-500 italic">SPECIALIZATION PROTOCOL</label>
+                    <select
+                      value={editFormData.role}
+                      onChange={(e) => setEditFormData({ ...editFormData, role: e.target.value })}
+                      className="premium-input !bg-black/40 !py-4.5 appearance-none cursor-pointer focus:border-blue-500"
+                    >
+                      <option className="text-black" value="Batsman">BATSMAN</option>
+                      <option className="text-black" value="Bowler">BOWLER</option>
+                      <option className="text-black" value="All-rounder">ALL-ROUNDER</option>
+                      <option className="text-black" value="Wicket-keeper">WICKET-KEEPER</option>
+                    </select>
+                  </div>
+                  <div className="space-y-4">
+                    <label className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-500 italic">ORIGIN COORDINATES (DEPT)</label>
+                    <input
+                      required
+                      type="text"
+                      value={editFormData.dept}
+                      onChange={(e) => setEditFormData({ ...editFormData, dept: e.target.value })}
+                      className="premium-input !bg-black/40"
+                      placeholder="BRANCH / UNIT..."
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                  <div className="space-y-4">
+                    <label className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-500 italic">DRAFT CHRONOLOGY (YEAR)</label>
+                    <input
+                      required
+                      type="text"
+                      value={editFormData.year}
+                      onChange={(e) => setEditFormData({ ...editFormData, year: e.target.value })}
+                      className="premium-input !bg-black/40 font-mono"
+                      placeholder="202X / 1ST YEAR..."
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-6 p-8 bg-blue-600/[0.03] border border-blue-500/10 rounded-3xl">
+                  <div className="flex justify-between items-center px-2">
+                    <label className="text-[10px] font-black uppercase tracking-[0.4em] text-blue-400 italic">AUCTION BASE VALUATION</label>
+                    <span className="text-2xl font-black text-blue-400 font-mono tracking-tighter shimmer-text">{formatPrice(editFormData.basePrice)}</span>
+                  </div>
+                  <div className="relative pt-4">
+                    <input
+                      type="range"
+                      min="5"
+                      max="500"
+                      step="5"
+                      value={editFormData.basePrice}
+                      onChange={(e) => setEditFormData({ ...editFormData, basePrice: parseInt(e.target.value) })}
+                      className="w-full accent-blue-600 bg-white/5 h-2 rounded-full appearance-none cursor-pointer"
+                    />
+                    <div className="flex justify-between mt-4 text-[9px] font-black text-gray-700 uppercase tracking-widest px-1">
+                      <span>MIN: 5L</span>
+                      <span>MAX: 5Cr</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-4 flex gap-6">
+                  <button
+                    type="button"
+                    onClick={() => setShowEditModal(false)}
+                    className="flex-1 py-5 rounded-2xl bg-white/[0.03] border border-white/10 text-[10px] font-black uppercase tracking-[0.3em] hover:bg-white/[0.08] transition-all text-gray-500 hover:text-white"
+                  >
+                    ABORT CONFIG
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-[2] bg-blue-600 hover:bg-blue-500 text-white py-5 rounded-2xl text-[11px] font-black uppercase tracking-[0.3em] shadow-[0_0_30px_rgba(37,99,235,0.2)] transition-all flex items-center justify-center gap-3 group"
+                  >
+                    SYNCHRONIZE RECORD
+                    <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

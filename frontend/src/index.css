@@ -6,11 +6,11 @@
   --premium-gold-rgb: 212, 175, 55;
   --premium-gold-light-rgb: 242, 212, 114;
   --premium-gold-dark-rgb: 153, 122, 30;
-  --premium-dark-rgb: 15, 15, 15;
-  --premium-dark-lighter-rgb: 26, 26, 26;
-  --premium-card-rgb: 18, 18, 18;
-  --premium-border-rgb: 42, 42, 42;
-  --premium-accent-rgb: 59, 130, 246;
+  --premium-dark-rgb: 6, 6, 8;
+  --premium-dark-lighter-rgb: 12, 12, 16;
+  --premium-card-rgb: 10, 10, 14;
+  --premium-border-rgb: 30, 30, 35;
+  --premium-accent-rgb: 37, 99, 235;
 
   --premium-gold: rgb(var(--premium-gold-rgb));
   --premium-gold-light: rgb(var(--premium-gold-light-rgb));
@@ -25,6 +25,10 @@
 @layer base {
   body {
     @apply bg-premium-dark text-white font-sans antialiased selection:bg-premium-gold/30 selection:text-premium-gold;
+    background-image: 
+      radial-gradient(circle at 50% 0%, rgba(var(--premium-accent-rgb), 0.08) 0%, transparent 50%),
+      radial-gradient(circle at 100% 100%, rgba(var(--premium-gold-rgb), 0.05) 0%, transparent 40%);
+    background-attachment: fixed;
   }
 }
 
@@ -32,10 +36,25 @@
 
   /* Complex Glassmorphism */
   .glass-panel {
-    @apply bg-white/[0.03] backdrop-blur-xl border border-white/[0.08] rounded-2xl;
+    @apply bg-white/[0.02] backdrop-blur-3xl border border-white/[0.05] rounded-3xl;
     box-shadow:
-      0 4px 24px -1px rgba(0, 0, 0, 0.2),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+      0 10px 40px -10px rgba(0, 0, 0, 0.5),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+  }
+
+  .cinematic-bg {
+    @apply absolute inset-0 overflow-hidden pointer-events-none;
+  }
+
+  .cinematic-glow {
+    @apply absolute rounded-full blur-[120px] opacity-20 animate-pulse-slow;
+  }
+
+  .modern-grid {
+    background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    background-size: 50px 50px;
+    mask-image: radial-gradient(circle at center, black, transparent 80%);
   }
 
   .glass-card {

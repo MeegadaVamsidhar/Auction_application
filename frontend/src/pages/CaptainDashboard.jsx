@@ -15,7 +15,9 @@ import {
   Clock,
   Layout,
   User as UserIcon,
-  AlertCircle
+  AlertCircle,
+  Target,
+  Star
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -168,10 +170,13 @@ const CaptainDashboard = () => {
 
   return (
     <div className="min-h-screen bg-premium-dark text-white font-sans selection:bg-blue-500/30">
-      {/* Background Grid */}
-      <div className="fixed inset-0 z-0 pointer-events-none opacity-20">
-        <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(59, 130, 246, 0.1) 1px, transparent 0)', backgroundSize: '40px 40px' }}></div>
-        <div className="absolute top-0 left-0 w-full h-[600px] bg-gradient-to-b from-blue-500/[0.05] to-transparent"></div>
+      {/* Cinematic Background Layer */}
+      <div className="cinematic-bg fixed z-0">
+        <div className="cinematic-glow w-[900px] h-[900px] -top-64 -left-64 bg-premium-accent/15"></div>
+        <div className="cinematic-glow w-[700px] h-[700px] bottom-0 right-0 bg-premium-gold/5"></div>
+        <div className="cinematic-bg modern-grid opacity-20"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-premium-dark via-transparent to-transparent"></div>
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-[0.02]"></div>
       </div>
 
       <div className="relative z-10 p-4 md:p-8 max-w-[1600px] mx-auto flex flex-col gap-6">
@@ -279,35 +284,50 @@ const CaptainDashboard = () => {
                     </div>
 
                     <div className="space-y-8">
-                      <div className="flex items-center gap-8">
-                        <div className="w-32 h-32 rounded-3xl bg-white/[0.03] border border-white/10 flex items-center justify-center shadow-2xl overflow-hidden group">
-                          <span className="text-6xl font-black italic text-blue-400 group-hover:scale-110 transition-transform">
+                      <div className="flex items-center gap-10">
+                        <div className="w-36 h-36 rounded-3xl bg-white/[0.03] border border-white/10 flex items-center justify-center shadow-2xl overflow-hidden group relative">
+                          <span className="text-7xl font-black italic text-blue-400 group-hover:scale-110 transition-transform duration-700">
                             {liveAuction.currentPlayer?.name.charAt(0)}
                           </span>
+                          <div className="absolute inset-x-0 bottom-0 h-1 bg-blue-400/40 animate-scan"></div>
                         </div>
-                        <div className="space-y-2">
-                          <span className="badge-gold !bg-blue-500/10 !text-blue-400 !border-blue-500/20">LIVE PROSPECT</span>
-                          <h2 className="text-4xl md:text-5xl font-black italic tracking-tighter text-white uppercase">{liveAuction.currentPlayer?.name}</h2>
-                          <p className="text-xs font-bold text-gray-500 uppercase tracking-[0.2em]">{liveAuction.currentPlayer?.role} | {liveAuction.currentPlayer?.dept}</p>
+                        <div className="space-y-4">
+                          <div className="flex items-center gap-3">
+                            <span className="bg-blue-600/10 text-blue-400 border border-blue-500/20 px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest italic flex items-center gap-2">
+                              <Shield size={10} /> TARGET_ALPHA
+                            </span>
+                          </div>
+                          <h2 className="text-3xl md:text-4xl font-black italic tracking-tighter text-white uppercase leading-none shimmer-text">{liveAuction.currentPlayer?.name}</h2>
+                          <div className="flex items-center gap-5 pt-1">
+                            <p className="text-[11px] font-black text-gray-500 uppercase tracking-[0.4em] flex items-center gap-2">
+                              <Target size={12} className="text-blue-500/40" /> {liveAuction.currentPlayer?.role}
+                            </p>
+                            <div className="w-1.5 h-1.5 rounded-full bg-blue-500/20"></div>
+                            <p className="text-[11px] font-black text-gray-500 uppercase tracking-[0.4em] italic">{liveAuction.currentPlayer?.dept}</p>
+                          </div>
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-8 py-8 border-y border-white/5">
-                        <div className="space-y-1">
-                          <p className="text-[10px] font-black uppercase text-gray-600 tracking-widest">Opening Value</p>
-                          <p className="text-3xl font-black italic font-mono text-white">{formatPrice(liveAuction.currentPlayer?.basePrice)}</p>
+                      <div className="grid grid-cols-2 gap-12 py-10 border-y border-white/5 bg-white/[0.01] rounded-[40px] px-10 relative overflow-hidden group">
+                        <div className="absolute inset-0 bg-blue-500/[0.02] opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        <div className="space-y-3 relative z-10 border-r border-white/5 pr-4">
+                          <p className="text-[11px] font-black uppercase text-gray-700 tracking-[0.3em] font-mono italic">BASE_VALUATION</p>
+                          <p className="text-3xl font-black italic font-mono text-gray-500 tabular-nums tracking-tighter">{formatPrice(liveAuction.currentPlayer?.basePrice)}</p>
                         </div>
-                        <div className="space-y-1 text-right">
-                          <p className="text-[10px] font-black uppercase text-blue-400 tracking-widest">Next Allocation</p>
-                          <p className="text-3xl font-black italic font-mono text-blue-400">{formatPrice(nextBidAmount)}</p>
+                        <div className="space-y-3 text-right relative z-10">
+                          <p className="text-[11px] font-black uppercase text-blue-400 tracking-[0.3em] font-mono italic">PEAK_BID_SIGNATURE</p>
+                          <p className="text-4xl font-black italic font-mono text-blue-400 tabular-nums shimmer-text tracking-tighter leading-none">{formatPrice(liveAuction.highestBid || 0)}</p>
                         </div>
                       </div>
 
                       <div className="space-y-6">
-                        <div className="flex justify-between items-center px-4">
-                          <p className="text-[10px] font-black text-gray-600 uppercase tracking-widest">Highest Bidder</p>
-                          <p className="text-xs font-black italic text-blue-400 uppercase tracking-tighter">
-                            {liveAuction.highestBidderName || "NO ACTIVE BIDS"}
+                        <div className="px-6 space-y-3 py-2">
+                          <div className="flex items-center gap-4">
+                            <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse shadow-[0_0_15px_rgba(59,130,246,0.6)]"></div>
+                            <p className="text-[11px] font-black text-blue-400/50 uppercase tracking-[0.5em] italic">COMMANDER_IDENT</p>
+                          </div>
+                          <p className="text-3xl font-black italic text-white uppercase tracking-tighter shimmer-text leading-none">
+                            {liveAuction.highestBidderName || "SIGNAL_PENDING..."}
                           </p>
                         </div>
 
@@ -315,12 +335,12 @@ const CaptainDashboard = () => {
                           onClick={handleBid}
                           disabled={team.remainingPurse < nextBidAmount}
                           className={`w-full py-6 rounded-2xl flex items-center justify-center gap-4 group transition-all ${team.remainingPurse < nextBidAmount
-                              ? 'bg-gray-800/50 cursor-not-allowed border border-white/5 text-gray-600'
-                              : 'bg-blue-600 hover:bg-blue-500 text-white shadow-2xl shadow-blue-600/30'
+                            ? 'bg-gray-800/50 cursor-not-allowed border border-white/5 text-gray-600'
+                            : 'bg-blue-600 hover:bg-blue-500 text-white shadow-2xl shadow-blue-600/30'
                             }`}
                         >
-                          <Zap size={24} className={team.remainingPurse < nextBidAmount ? 'text-gray-700' : 'fill-current'} />
-                          <span className="text-2xl font-black italic tracking-widest uppercase">
+                          <Zap size={20} className={team.remainingPurse < nextBidAmount ? 'text-gray-700' : 'fill-current'} />
+                          <span className="text-lg font-black italic tracking-widest uppercase">
                             {team.remainingPurse < nextBidAmount ? "CAPACITY EXCEEDED" : `CONFIRM ${formatPrice(nextBidAmount)}`}
                           </span>
                           {!(team.remainingPurse < nextBidAmount) && <ChevronRight size={24} className="group-hover:translate-x-1 transition-transform" />}
@@ -334,7 +354,7 @@ const CaptainDashboard = () => {
                   </div>
 
                   {/* Bid History Feed */}
-                  <div className="glass-panel flex flex-col h-full border-white/5 bg-black/40">
+                  <div className="glass-panel flex flex-col h-[650px] border-white/5 bg-black/40">
                     <div className="p-6 border-b border-white/5 bg-white/[0.02] flex items-center gap-3">
                       <Activity size={18} className="text-blue-400" />
                       <h3 className="text-sm font-black italic uppercase tracking-widest">TRANSACTION FEED</h3>
@@ -347,7 +367,7 @@ const CaptainDashboard = () => {
                               initial={{ opacity: 0, x: 20 }}
                               animate={{ opacity: 1, x: 0 }}
                               key={idx}
-                              className={`flex justify-between items-center p-4 rounded-xl border ${log.teamName === team.name ? 'bg-blue-500/5 border-blue-500/20' : 'bg-white/[0.02] border-white/5'
+                              className={`flex justify-between items-center p-3 rounded-xl border ${log.teamName === team.name ? 'bg-blue-500/5 border-blue-500/20' : 'bg-white/[0.02] border-white/5'
                                 }`}
                             >
                               <div className="flex items-center gap-3">

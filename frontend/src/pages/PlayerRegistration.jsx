@@ -47,10 +47,12 @@ const PlayerRegistration = () => {
   return (
     <div className="min-h-screen bg-premium-dark flex overflow-hidden font-sans">
       {/* Cinematic Background Layer */}
-      <div className="absolute inset-0 z-0 pointer-events-none">
-        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-premium-gold/5 rounded-full blur-[150px] animate-pulse"></div>
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-blue-600/5 rounded-full blur-[120px] animate-pulse-slow"></div>
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-[0.03]"></div>
+      <div className="cinematic-bg z-0">
+        <div className="cinematic-glow w-[800px] h-[800px] -top-96 -right-96 bg-premium-gold/10"></div>
+        <div className="cinematic-glow w-[600px] h-[600px] bottom-0 left-0 bg-premium-accent/10"></div>
+        <div className="cinematic-bg modern-grid opacity-15"></div>
+        <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-premium-dark to-transparent opacity-60"></div>
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-[0.02]"></div>
       </div>
 
       {/* Side Brand Panel */}
@@ -172,9 +174,9 @@ const PlayerRegistration = () => {
                     onChange={(e) => setFormData({ ...formData, year: e.target.value })}
                     className="premium-input !bg-white/[0.02] !border-white/5 focus:!border-premium-gold/50 appearance-none cursor-pointer"
                   >
-                    <option value="" className="bg-premium-dark">SELECT YEAR</option>
+                    <option value="" className="bg-premium-dark text-black">SELECT YEAR</option>
                     {["1ST YEAR", "2ND YEAR", "3RD YEAR", "4TH YEAR", "MTECH"].map(yr => (
-                      <option key={yr} value={yr} className="bg-premium-dark">{yr}</option>
+                      <option key={yr} value={yr} className="bg-premium-dark text-black">{yr}</option>
                     ))}
                   </select>
                 </div>
@@ -189,9 +191,9 @@ const PlayerRegistration = () => {
                     onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                     className="premium-input !bg-white/[0.02] !border-white/5 focus:!border-premium-gold/50 appearance-none cursor-pointer"
                   >
-                    <option value="" className="bg-premium-dark">SELECT ROLE</option>
-                    {["BATSMAN", "BOWLER", "ALLROUNDER", "WICKETKEEPER"].map(r => (
-                      <option key={r} value={r} className="bg-premium-dark">{r}</option>
+                    <option value="" className="bg-premium-dark text-black">SELECT ROLE</option>
+                    {[["Batsman", "BATSMAN"], ["Bowler", "BOWLER"], ["All-rounder", "ALL-ROUNDER"], ["Wicket-keeper", "WICKET-KEEPER"]].map(([val, label]) => (
+                      <option key={val} value={val} className="bg-premium-dark text-black">{label}</option>
                     ))}
                   </select>
                 </div>
@@ -238,7 +240,7 @@ const PlayerRegistration = () => {
           </form>
 
           {/* Hidden Link for Desktop back button */}
-          <div className="hidden lg:block absolute bottom-0 left-0 p-8">
+          <div className="hidden lg:block absolute top-0 left-0 p-8">
             <Link to="/" className="text-[10px] font-black text-gray-700 hover:text-white transition-colors uppercase tracking-[0.4em]">
               ← ABORT_PORTAL
             </Link>

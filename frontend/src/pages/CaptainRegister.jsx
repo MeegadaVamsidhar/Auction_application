@@ -7,6 +7,7 @@ import API_URL from "../config";
 
 const CaptainRegister = () => {
   const [formData, setFormData] = useState({
+    captainName: "",
     mobile: "",
     email: "",
     password: "",
@@ -108,6 +109,21 @@ const CaptainRegister = () => {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-5">
+              <div className="space-y-3">
+                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-500">CAPTAIN_NAME</label>
+                <div className="relative group/input">
+                  <Crown className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 group-focus-within/input:text-blue-500 transition-colors" size={18} />
+                  <input
+                    required
+                    type="text"
+                    value={formData.captainName}
+                    onChange={(e) => setFormData({ ...formData, captainName: e.target.value })}
+                    className="premium-input !pl-12 !bg-white/[0.02] !border-white/5 focus:!border-blue-500/50 !text-white"
+                    placeholder="Enter your full name"
+                  />
+                </div>
+              </div>
+
               <div className="space-y-3">
                 <label className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-500">TEAM_IDENTIFIER</label>
                 <div className="relative group/input">

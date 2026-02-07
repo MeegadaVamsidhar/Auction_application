@@ -70,11 +70,13 @@ const Landing = () => {
 
   return (
     <div className="min-h-screen bg-premium-dark flex flex-col relative overflow-hidden font-sans">
-      {/* Dynamic Background */}
-      <div className="absolute inset-0 z-0">
-        <div className="absolute top-0 -left-1/4 w-1/2 h-1/2 bg-premium-gold/5 rounded-full blur-[160px] animate-pulse-slow"></div>
-        <div className="absolute -bottom-1/4 -right-1/4 w-1/2 h-1/2 bg-premium-accent/5 rounded-full blur-[160px] animate-pulse-slow"></div>
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-[0.03] pointer-events-none"></div>
+      {/* Cinematic Background Layer */}
+      <div className="cinematic-bg z-0">
+        <div className="cinematic-glow w-[800px] h-[800px] -top-96 -left-96 bg-premium-accent/20"></div>
+        <div className="cinematic-glow w-[600px] h-[600px] bottom-0 right-0 bg-premium-gold/10"></div>
+        <div className="cinematic-bg modern-grid opacity-20"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-premium-dark/50 to-premium-dark"></div>
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-[0.02] mix-blend-overlay"></div>
       </div>
 
       {/* Navbar Integration */}

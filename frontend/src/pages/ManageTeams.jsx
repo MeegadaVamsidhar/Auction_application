@@ -251,11 +251,13 @@ const ManageTeams = () => {
                         <td className="p-8">
                           <div className="flex items-center gap-4">
                             <div className="w-10 h-10 rounded-xl bg-white/[0.03] border border-white/10 flex items-center justify-center text-[10px] font-black text-gray-500 uppercase italic">
-                              {(team.captain?.username || "??").charAt(0)}
+                              {(team.captainName || team.captain?.username || "??").charAt(0)}
                             </div>
                             <div>
-                              <p className="text-xs font-black text-white italic uppercase">{team.captain?.username || "PENDING ASSIGN"}</p>
-                              <p className="text-[9px] text-gray-600 font-bold uppercase tracking-widest mt-1.5 italic">Operational Captain</p>
+                              <p className="text-xs font-black text-white italic uppercase">{team.captainName || team.captain?.username || "PENDING ASSIGN"}</p>
+                              <p className="text-[9px] text-gray-600 font-bold uppercase tracking-widest mt-1.5 italic">
+                                {team.captainPhone || team.captain?.mobile || "No Contact"}
+                              </p>
                             </div>
                           </div>
                         </td>
@@ -350,6 +352,29 @@ const ManageTeams = () => {
                   <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">Initial Capital (Lakhs)</label>
                   <input type="number" className="premium-input w-full" value={formData.initialPurse} onChange={e => setFormData({ ...formData, initialPurse: parseInt(e.target.value) })} />
                 </div>
+
+                {editingTeam && (
+                  <>
+                    <div className="pt-4 border-t border-white/5">
+                      <h3 className="text-sm font-black uppercase tracking-widest text-blue-400 mb-4">Captain Information</h3>
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">Captain Name</label>
+                          <input className="premium-input w-full" value={formData.captainName} onChange={e => setFormData({ ...formData, captainName: e.target.value })} placeholder="Enter captain name" />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">Captain Mobile</label>
+                          <input type="tel" className="premium-input w-full" value={formData.captainMobile} onChange={e => setFormData({ ...formData, captainMobile: e.target.value })} placeholder="Enter captain mobile" />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-gray-500">Captain Email</label>
+                          <input type="email" className="premium-input w-full" value={formData.captainEmail} onChange={e => setFormData({ ...formData, captainEmail: e.target.value })} placeholder="Enter captain email" />
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+
                 <div className="flex gap-4 pt-4">
                   <button type="button" onClick={() => setShowModal(false)} className="flex-1 py-4 bg-white/5 rounded-xl text-[10px] font-black">ABORT</button>
                   <button type="submit" className="flex-1 py-4 bg-blue-600 rounded-xl text-[10px] font-black uppercase">EXECUTE</button>

@@ -33,10 +33,12 @@ const AdminLogin = () => {
   return (
     <div className="min-h-screen bg-premium-dark flex overflow-hidden font-sans">
       {/* Cinematic Background Layer */}
-      <div className="absolute inset-0 z-0">
-        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-red-600/5 rounded-full blur-[150px] animate-pulse"></div>
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-blue-600/5 rounded-full blur-[120px] animate-pulse-slow"></div>
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-[0.03]"></div>
+      <div className="cinematic-bg fixed z-0">
+        <div className="cinematic-glow w-[800px] h-[800px] -top-96 -right-96 bg-red-600/10"></div>
+        <div className="cinematic-glow w-[600px] h-[600px] bottom-0 left-0 bg-blue-600/5"></div>
+        <div className="cinematic-bg modern-grid opacity-15"></div>
+        <div className="absolute inset-0 bg-gradient-to-tr from-premium-dark via-transparent to-transparent"></div>
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-[0.02]"></div>
       </div>
 
       {/* Side Brand Panel - Tactical Style */}

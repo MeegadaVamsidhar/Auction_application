@@ -263,14 +263,14 @@ const ManagePlayers = () => {
                         </td>
                         <td className="p-8">
                           <span className={`text-[9px] font-black uppercase px-4 py-2 rounded-xl border flex items-center gap-3 w-fit tracking-widest ${player.status === 'sold' ? 'bg-green-500/10 text-green-500 border-green-500/20' :
-                              player.status === 'rejected' ? 'bg-red-500/10 text-red-500 border-red-500/20' :
-                                player.status === 'approved' ? 'bg-blue-500/10 text-blue-500 border-blue-500/20' :
-                                  'bg-white/5 text-gray-500 border-white/10'
+                            player.status === 'rejected' ? 'bg-red-500/10 text-red-500 border-red-500/20' :
+                              player.status === 'approved' ? 'bg-blue-500/10 text-blue-500 border-blue-500/20' :
+                                'bg-white/5 text-gray-500 border-white/10'
                             }`}>
                             <div className={`w-1.5 h-1.5 rounded-full ${player.status === 'sold' ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]' :
-                                player.status === 'rejected' ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]' :
-                                  player.status === 'approved' ? 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]' :
-                                    'bg-gray-500'
+                              player.status === 'rejected' ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]' :
+                                player.status === 'approved' ? 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]' :
+                                  'bg-gray-500'
                               }`}></div>
                             {player.status}
                           </span>
@@ -402,10 +402,10 @@ const ManagePlayers = () => {
                       onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                       className="premium-input !bg-black/40 !py-4.5 appearance-none cursor-pointer focus:border-premium-gold"
                     >
-                      <option value="BATSMAN">BATSMAN</option>
-                      <option value="BOWLING">BOWLING</option>
-                      <option value="BOWLING ALLROUNDER">BOWLING ALLROUNDER</option>
-                      <option value="BATTING ALLROUNDER">BATTING ALLROUNDER</option>
+                      <option value="Batsman" className="text-black">BATSMAN</option>
+                      <option value="Bowler" className="text-black">BOWLER</option>
+                      <option value="All-rounder" className="text-black">ALL-ROUNDER</option>
+                      <option value="Wicket-keeper" className="text-black">WICKET-KEEPER</option>
                     </select>
                   </div>
                   <div className="space-y-4">
@@ -415,11 +415,11 @@ const ManagePlayers = () => {
                       onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                       className="premium-input !bg-black/40 !py-4.5 appearance-none cursor-pointer focus:border-premium-gold"
                     >
-                      <option value="pending">PENDING PROTOCOL</option>
-                      <option value="approved">AUTHORIZED</option>
-                      <option value="rejected">VOIDED</option>
-                      <option value="sold">CONCLUDED (SOLD)</option>
-                      <option value="unsold">UNSOLD ARCHIVE</option>
+                      <option value="pending" className="text-black">PENDING PROTOCOL</option>
+                      <option value="approved" className="text-black">AUTHORIZED</option>
+                      <option value="rejected" className="text-black">VOIDED</option>
+                      <option value="sold" className="text-black">CONCLUDED (SOLD)</option>
+                      <option value="unsold" className="text-black">UNSOLD ARCHIVE</option>
                     </select>
                   </div>
                 </div>

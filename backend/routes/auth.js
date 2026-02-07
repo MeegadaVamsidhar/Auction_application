@@ -11,7 +11,12 @@ const sendEmail = require("../utils/emailService");
 // Register
 router.post("/register", async (req, res) => {
   try {
-    let { username, mobile, email, password, role, teamName } = req.body;
+    let { username, captainName, mobile, email, password, role, teamName } = req.body;
+
+    // For captains, use captainName if provided
+    if (role === "captain" && captainName) {
+      username = captainName;
+    }
 
     // If no username provided, use mobile
     if (!username && mobile) username = mobile;
@@ -25,6 +30,12 @@ router.post("/register", async (req, res) => {
       return res
         .status(400)
         .json({ error: "Team Name is required for Captain registration." });
+    }
+
+    if (role === "captain" && !captainName) {
+      return res
+        .status(400)
+        .json({ error: "Captain Name is required for Captain registration." });
     }
 
     // Check if team name exists if role is captain
@@ -146,20 +157,23 @@ router.post("/register", async (req, res) => {
         initialPurse: 8000, // Representing 80 CR (8000 Lakhs)
         remainingPurse: 8000,
         captain: user._id,
+        captainName: username,
+        captainPhone: mobile,
       });
 
-      // CHECK: If a player with the same mobile exists, auto-allot them to the team
+      // CHECK: If a player with the same mobile exists, auto-allot them to the team as captain
       const existingPlayer = await Player.findOne({ mobile: user.mobile });
       if (existingPlayer) {
+        // Update player name to match captain name
+        existingPlayer.name = username;
         // Link player to team
         existingPlayer.team = team._id;
         existingPlayer.status = "sold";
-        existingPlayer.soldPrice = existingPlayer.basePrice || 0;
+        existingPlayer.soldPrice = 0; // Captain doesn't cost the team
         await existingPlayer.save();
 
-        // Add player to team and deduct purse
+        // Add player to team roster (no purse deduction for captain)
         team.players.push(existingPlayer._id);
-        team.remainingPurse -= existingPlayer.basePrice || 0;
       }
 
       await team.save();
@@ -293,7 +307,26 @@ router.post("/create-team", async (req, res) => {
       initialPurse: 8000, // Representing 80 CR (8000 Lakhs)
       remainingPurse: 8000,
       captain: user._id,
+      captainName: user.username,
+      captainPhone: user.mobile,
     });
+
+    // CHECK: If a player with the same mobile exists, auto-allot them to the team as captain
+    const Player = require("../models/Player");
+    const existingPlayer = await Player.findOne({ mobile: user.mobile });
+    if (existingPlayer) {
+      // Update player name to match captain name
+      existingPlayer.name = user.username;
+      // Link player to team
+      existingPlayer.team = team._id;
+      existingPlayer.status = "sold";
+      existingPlayer.soldPrice = 0; // Captain doesn't cost the team
+      await existingPlayer.save();
+
+      // Add player to team roster (no purse deduction for captain)
+      team.players.push(existingPlayer._id);
+    }
+
     await team.save();
 
     user.team = team._id;

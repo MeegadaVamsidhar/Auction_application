@@ -177,15 +177,14 @@ router.patch("/teams/:id/status", async (req, res) => {
         // 2. Link as Player if exists in Player list
         const playerMatch = await Player.findOne({ mobile: captain.mobile });
         if (playerMatch) {
-          playerMatch.status = "approved";
+          playerMatch.status = "sold";
           playerMatch.team = team._id;
+          playerMatch.soldPrice = 0;
           await playerMatch.save();
 
-          // Add to team players if not already there
+          // Add to team players if not already there (No purse deduction for captain)
           if (!team.players.includes(playerMatch._id)) {
             team.players.push(playerMatch._id);
-            // Optionally deduct base price?
-            // team.remainingPurse -= playerMatch.basePrice;
             await team.save();
           }
         }
@@ -289,8 +288,39 @@ router.post("/upload-players", upload.single("file"), async (req, res) => {
     }
 
     if (players.length > 0) {
-      // Use insertMany with ordered: false to skip duplicates and continue
-      await Player.insertMany(players, { ordered: false });
+      // Process players individually or in small batches to handle captain auto-allotment
+      for (const pData of players) {
+        try {
+          const captainUser = await User.findOne({
+            mobile: pData.mobile,
+            role: "captain",
+            isApproved: true
+          });
+
+          const updateFields = { ...pData };
+          if (captainUser) {
+            updateFields.status = "sold";
+            updateFields.team = captainUser.team;
+            updateFields.soldPrice = 0;
+          }
+
+          const savedPlayer = await Player.findOneAndUpdate(
+            { mobile: pData.mobile },
+            { $set: updateFields },
+            { upsert: true, new: true }
+          );
+
+          if (captainUser && savedPlayer) {
+            const team = await Team.findById(captainUser.team);
+            if (team && !team.players.includes(savedPlayer._id)) {
+              team.players.push(savedPlayer._id);
+              await team.save();
+            }
+          }
+        } catch (err) {
+          errors.push({ data: pData, error: err.message });
+        }
+      }
     }
 
     res.status(201).json({
@@ -391,10 +421,31 @@ router.put("/teams/:id", async (req, res) => {
     if (team.captain && (captainName || captainMobile || captainEmail)) {
       const captainUser = await User.findById(team.captain);
       if (captainUser) {
-        if (captainName) captainUser.username = captainName;
-        if (captainMobile) captainUser.mobile = captainMobile;
+        const oldMobile = captainUser.mobile;
+
+        if (captainName) {
+          captainUser.username = captainName;
+          team.captainName = captainName;
+        }
+        if (captainMobile) {
+          captainUser.mobile = captainMobile;
+          team.captainPhone = captainMobile;
+        }
         if (captainEmail) captainUser.email = captainEmail;
         await captainUser.save();
+
+        // Update matching player record if exists
+        const Player = require("../models/Player");
+
+        // If mobile changed, find player by old mobile
+        const playerMobile = captainMobile || oldMobile;
+        const existingPlayer = await Player.findOne({ mobile: oldMobile });
+
+        if (existingPlayer) {
+          if (captainName) existingPlayer.name = captainName;
+          if (captainMobile) existingPlayer.mobile = captainMobile;
+          await existingPlayer.save();
+        }
       }
     }
 
@@ -564,8 +615,9 @@ router.post("/settings/player-list-link", async (req, res) => {
               {
                 $set: updateData,
                 $setOnInsert: {
-                  status: captainUser ? "approved" : "pending",
+                  status: captainUser ? "sold" : "pending",
                   team: captainUser ? captainUser.team : null,
+                  soldPrice: captainUser ? 0 : undefined,
                 },
               },
               { upsert: true, new: true, rawResult: true },
@@ -576,6 +628,7 @@ router.post("/settings/player-list-link", async (req, res) => {
               const team = await Team.findById(captainUser.team);
               if (team && !team.players.includes(result.value._id)) {
                 team.players.push(result.value._id);
+                // No purse deduction for captain
                 await team.save();
               }
             }
@@ -657,19 +710,19 @@ router.post("/assign-captain", async (req, res) => {
     }
     await user.save();
 
-    // 2. Update Team & Financials
-    // Deduct base price from team purse if not already added
+    // 2. Update Team & Financials (No purse deduction for captain)
     if (!team.players.includes(player._id)) {
       team.players.push(player._id);
-      team.remainingPurse -= player.basePrice || 0;
     }
     team.captain = user._id;
+    team.captainName = player.name;
+    team.captainPhone = player.mobile;
     await team.save();
 
     // 3. Update Player Status
     player.team = team._id;
     player.status = "sold"; // Mark as sold so they don't appear in auction
-    player.soldPrice = player.basePrice || 0;
+    player.soldPrice = 0; // Captain doesn't cost the team
     await player.save();
 
     res.json({ message: `Player ${player.name} is now captain of ${team.name} and added to the squad.`, team, user });

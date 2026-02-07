@@ -24,12 +24,12 @@ router.post("/register", async (req, res) => {
     } = req.body;
 
     // Validation
-    if (!name || !mobile || !dept || !year || !role) {
+    if (!name || !mobile || !year || !role) {
       return res
         .status(400)
         .json({
           error:
-            "Please fill all required fields: Name, Mobile, Dept, Year, Role",
+            "Please fill all required fields: Name, Mobile, Year, Role",
         });
     }
 
@@ -73,7 +73,7 @@ router.post("/register", async (req, res) => {
       name,
       mobile,
       password: hashedPassword,
-      dept,
+      dept: dept || "N/A",
       year,
       previousTeams,
       role: normalizedRole,
@@ -91,6 +91,44 @@ router.post("/register", async (req, res) => {
 
     await newPlayer.save();
     console.log("Player Registered Successfully:", name);
+
+    // Check if a captain exists with the same mobile number
+    const User = require("../models/User");
+    const Team = require("../models/Team");
+
+    const captainUser = await User.findOne({
+      mobile: mobile,
+      role: "captain",
+      isApproved: true,
+    });
+
+    if (captainUser && captainUser.team) {
+      // Captain exists with this mobile - auto-assign player to their team
+      const team = await Team.findById(captainUser.team);
+
+      if (team) {
+        // Update player with captain's name and assign to team
+        newPlayer.name = captainUser.username;
+        newPlayer.team = team._id;
+        newPlayer.status = "sold";
+        newPlayer.soldPrice = 0; // Captain doesn't cost the team
+        await newPlayer.save();
+
+        // Add player to team roster (no purse deduction for captain)
+        if (!team.players.includes(newPlayer._id)) {
+          team.players.push(newPlayer._id);
+          await team.save();
+        }
+
+        console.log(`Player auto-assigned to team ${team.name} as captain`);
+
+        return res.status(201).json({
+          message: "Registration Successful! You have been automatically assigned to your team as captain.",
+          player: { id: newPlayer._id, name: newPlayer.name, team: team.name },
+        });
+      }
+    }
+
     res
       .status(201)
       .json({
