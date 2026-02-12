@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const Player = require("../models/Player");
 const bcrypt = require("bcryptjs");
+const { calculateBasePrice } = require("../utils/playerUtils");
 
 // @route   POST /api/players/register
 // @desc    Register a new player for the auction
@@ -69,12 +70,16 @@ router.post("/register", async (req, res) => {
         });
     }
 
+    // Base price calculation
+    const basePrice = calculateBasePrice(year);
+
     const newPlayer = new Player({
       name,
       mobile,
       password: hashedPassword,
       dept: dept || "N/A",
       year,
+      basePrice,
       previousTeams,
       role: normalizedRole,
       battingStyle: battingStyle || "Right-hand",
@@ -99,7 +104,6 @@ router.post("/register", async (req, res) => {
     const captainUser = await User.findOne({
       mobile: mobile,
       role: "captain",
-      isApproved: true,
     });
 
     if (captainUser && captainUser.team) {

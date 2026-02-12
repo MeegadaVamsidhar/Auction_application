@@ -7,6 +7,7 @@ const xlsx = require("xlsx");
 const User = require("../models/User");
 const Admin = require("../models/Admin");
 const sendEmail = require("../utils/emailService");
+const { calculateBasePrice } = require("../utils/playerUtils");
 const router = express.Router();
 
 const storage = multer.memoryStorage();
@@ -248,6 +249,7 @@ router.post("/upload-players", upload.single("file"), async (req, res) => {
           role: data.Role || data.role,
           dept: data.Dept || data.dept || "N/A",
           status: "pending", // Now requires admin approval
+          basePrice: calculateBasePrice(data.Year || data.year),
         };
 
         if (!player.name || !player.mobile) {
@@ -294,7 +296,6 @@ router.post("/upload-players", upload.single("file"), async (req, res) => {
           const captainUser = await User.findOne({
             mobile: pData.mobile,
             role: "captain",
-            isApproved: true
           });
 
           const updateFields = { ...pData };
@@ -336,6 +337,9 @@ router.post("/upload-players", upload.single("file"), async (req, res) => {
 // Player self-registration
 router.post("/players/register", async (req, res) => {
   try {
+    if (req.body.year && (!req.body.basePrice || req.body.basePrice === 5)) {
+      req.body.basePrice = calculateBasePrice(req.body.year);
+    }
     const player = new Player(req.body);
     await player.save();
     res.status(201).json(player);
@@ -574,6 +578,8 @@ router.post("/settings/player-list-link", async (req, res) => {
             status: "pending",
           };
 
+          player.basePrice = calculateBasePrice(player.year);
+
           if (player.name && player.mobile) {
             // Normalize Role to match Enum
             const roleUpper = player.role
@@ -607,7 +613,6 @@ router.post("/settings/player-list-link", async (req, res) => {
             const captainUser = await User.findOne({
               mobile: pData.mobile,
               role: "captain",
-              isApproved: true,
             });
 
             const result = await Player.findOneAndUpdate(

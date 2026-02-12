@@ -2,6 +2,7 @@ const express = require("express");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const Admin = require("../models/Admin");
+const Player = require("../models/Player");
 const router = express.Router();
 
 const Team = require("../models/Team");
@@ -48,7 +49,7 @@ router.post("/register", async (req, res) => {
       }
     }
 
-    const isApproved = role !== "admin" && role !== "captain"; // Admins and Captains need approval
+    let isApproved = role !== "admin" && role !== "captain"; // Admins and Captains usually need approval
 
     // Check duplicate mobile/email in BOTH collections
     const [existingAdmin, existingUser] = await Promise.all([
@@ -58,12 +59,26 @@ router.post("/register", async (req, res) => {
 
     if (existingAdmin || existingUser) {
       const hit = existingAdmin || existingUser;
-      if (hit.mobile === mobile)
-        return res
-          .status(400)
-          .json({ error: "Mobile number already registered." });
+      if (hit.mobile === mobile) {
+        // If they are registering for the role they already have, block it.
+        // But allow them to proceed if they are only in the Other collection (Admin vs User) 
+        // OR if they are just in the Player collection (checked implicitly as Player isn't searched here).
+        if (hit.role === role) {
+          return res.status(400).json({ error: `Mobile number already registered as ${role}.` });
+        }
+        // If an admin tries to be a captain or vice-versa, we usually want one account per mobile in User/Admin tables.
+        return res.status(400).json({ error: "Mobile number already registered with a different role. Please login." });
+      }
       if (hit.email && hit.email === email)
         return res.status(400).json({ error: "Email already registered." });
+    }
+
+    // Auto-approve captains if they are already registered as players
+    if (role === "captain") {
+      const playerEntry = await Player.findOne({ mobile });
+      if (playerEntry) {
+        isApproved = true;
+      }
     }
 
     let user;
@@ -151,7 +166,6 @@ router.post("/register", async (req, res) => {
     }
 
     if (role === "captain") {
-      const Player = require("../models/Player");
       const team = new Team({
         name: teamName,
         initialPurse: 8000, // Representing 80 CR (8000 Lakhs)
